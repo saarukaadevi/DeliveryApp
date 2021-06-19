@@ -1,0 +1,40 @@
+{
+    "project_info": {
+      "project_number": "1076815273264",
+      "firebase_url": "https://couriersy-default-rtdb.firebaseio.com",
+      "project_id": "couriersy",
+      "storage_bucket": "couriersy.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:1076815273264:android:d3dcd61acb7fc5421bbcf5",
+          "android_client_info": {
+            "package_name": "com.devpoints.Couriersy"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "1076815273264-ti4tuuaa0ckess516tuq0voeije7rvsv.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBc0L1sgqQDbX96EzMo4gHcopb8m6lgHh4"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "1076815273264-ti4tuuaa0ckess516tuq0voeije7rvsv.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
