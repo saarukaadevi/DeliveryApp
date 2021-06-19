@@ -120,7 +120,7 @@ export default function IntroScreen(props) {
         //     resizeMode="stretch"
         //     style={styles.imagebg}
         // >
-        <View style={[styles.topSpace,{backgroundColor:'#fff'}]}>
+        <View style={[styles.topSpace, { backgroundColor: '#fff' }]}>
             <MaterialButtonDark
                 onPress={onPressLoginEmail}
                 style={styles.materialButtonDark}
@@ -142,14 +142,14 @@ export default function IntroScreen(props) {
                 : null}
 
             {(Platform.OS == 'ios' && features.AppleLoginEnabled) || features.FacebookLoginEnabled ?
-                <View style={[styles.materialButtonDark3,{alignItems:'flex-start'}]}>
+                <View style={[styles.materialButtonDark3, { alignItems: 'flex-start' }]}>
                     {features.FacebookLoginEnabled ?
                         <TouchableOpacity style={styles.socialIcon} onPress={FbLogin}>
-                                <Image
-                                    source={require("../../assets/images/image_fb.png")}
-                                    resizeMode="contain"
-                                    style={styles.socialIconImage}
-                                ></Image>
+                            <Image
+                                source={require("../../assets/images/image_fb.png")}
+                                resizeMode="contain"
+                                style={styles.socialIconImage}
+                            ></Image>
                         </TouchableOpacity>
                         : null}
                     {Platform.OS == 'ios' && features.AppleLoginEnabled ?
@@ -270,13 +270,14 @@ const styles = StyleSheet.create({
     socialIcon: {
         width: 40,
         height: 40,
-        marginLeft: 15,
+        marginLeft: 10,
         marginRight: 15,
-        alignSelf: "center"
+        alignSelf: "center",
+        marginTop: 7
     },
     socialIconImage: {
-        width: 40,
-        height: 40
+        width: 35,
+        height: 35
     },
     terms: {
         marginTop: 18,

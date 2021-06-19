@@ -196,7 +196,7 @@ export default function EmailLoginScreen(props) {
                 resizeMode="stretch"
                 style={styles.imagebg}
             > */}
-            <View style={{backgroundColor:colors.PINK}}>
+            <View style={{backgroundColor:colors.WHITE}}>
                 <FirebaseRecaptchaVerifierModal
                     ref={recaptchaVerifier}
                     firebaseConfig={FirebaseConfig}
