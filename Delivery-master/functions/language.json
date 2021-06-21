@@ -155,6 +155,7 @@
     "addbookinglable": "Add Bookings",
     "select_user": "Select User",
     "email_placeholder": "Email",
+    "email_or_phone":"Email/Mobile number",
     "password_placeholder": "Password",
     "login_button": "Login",
     "forgot_password_link": "Forgot or Reset Password?",

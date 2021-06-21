@@ -14,7 +14,7 @@ import {
 import MaterialButtonDark from "../components/MaterialButtonDark";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import SegmentedControlTab from 'react-native-segmented-control-tab';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { FirebaseContext } from 'common/src';
 import { colors } from '../common/theme';
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
@@ -26,6 +26,7 @@ import {
     FirebaseConfig,
     features
 } from 'config';
+import UpdatedLogin from "./UpdatedLogin";
 
 export default function EmailLoginScreen(props) {
     const { api } = useContext(FirebaseContext);
@@ -190,29 +191,15 @@ export default function EmailLoginScreen(props) {
     };
 
     return (
-        <KeyboardAvoidingView behavior={"position"} style={styles.container}>
-            {/* <ImageBackground
-                source={require('../../assets/images/bg.jpg')}
-                resizeMode="stretch"
-                style={styles.imagebg}
-            > */}
-            <View style={{backgroundColor:colors.WHITE}}>
+        // <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+            <View style={{flex:1, backgroundColor: colors.WHITE }}>
                 <FirebaseRecaptchaVerifierModal
                     ref={recaptchaVerifier}
                     firebaseConfig={FirebaseConfig}
                     attemptInvisibleVerification={true}
                 />
-                <View style={styles.topBar}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => { props.navigation.navigate('Intro') }}>
-                        <Image
-                            source={require("../../assets/images/ios-back.png")}
-                            resizeMode="contain"
-                            style={styles.backButtonImage}
-                        ></Image>
-                    </TouchableOpacity>
-                </View>
                 <View>
-                    <SegmentedControlTab
+                    {/* <SegmentedControlTab
                         values={[language.email_login, language.mobile_login_title]}
                         selectedIndex={state.customStyleIndex}
                         onTabPress={handleCustomIndexSelect}
@@ -226,44 +213,11 @@ export default function EmailLoginScreen(props) {
                         activeTabStyle={{ borderBottomColor: colors.GREY.background, backgroundColor: 'transparent', borderBottomWidth: 2, marginTop: 2 }}
                         tabTextStyle={{ color: colors.WHITE, fontWeight: 'bold' }}
                         activeTabTextStyle={{ color: colors.GREY.background }}
-                    />
-                    {state.customStyleIndex == 0 ?
-                        <View style={styles.box1}>
-                            <TextInput
-                                ref={emailInput}
-                                style={styles.textInput}
-                                placeholder={language.email_placeholder}
-                                onChangeText={(value) => setState({ ...state, email: value })}
-                                value={state.email}
-                            />
-                        </View>
-                        : null}
-                    {state.customStyleIndex == 0 ?
-                        <View style={styles.box2}>
-                            <TextInput
-                                ref={passInput}
-                                style={styles.textInput}
-                                placeholder={language.password_placeholder}
-                                onChangeText={(value) => setState({ ...state, password: value })}
-                                value={state.password}
-                                secureTextEntry={true}
-                            />
-                        </View>
-                        : null}
-                    {state.customStyleIndex == 0 ?
-                        <MaterialButtonDark
-                            onPress={onAction}
-                            style={styles.materialButtonDark}
-                        >{language.login_button}</MaterialButtonDark>
-                        : null}
-                    {state.customStyleIndex == 0 ?
-                        <View style={styles.linkBar}>
-                            <TouchableOpacity style={styles.barLinks} onPress={() => Forgot_Password(state.email)}>
-                                <Text style={styles.linkText}>{language.forgot_password_link}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        : null}
-                    {state.customStyleIndex != 0 ?
+                    /> */}
+
+                    <UpdatedLogin />
+
+                    {/* {state.customStyleIndex != 0 ?
                         <View style={styles.box1}>
                             <RNPickerSelect
                                 placeholder={{ label: language.select_country, value: language.select_country }}
@@ -278,8 +232,8 @@ export default function EmailLoginScreen(props) {
                                 disabled={!!state.verificationId || !features.AllowCountrySelection ? true : false}
                             />
                         </View>
-                        : null}
-                    {state.customStyleIndex != 0 ?
+                        : null} */}
+                    {/* {state.customStyleIndex != 0 ?
                         <View style={styles.box2}>
                             <TextInput
                                 style={styles.textInput}
@@ -290,8 +244,8 @@ export default function EmailLoginScreen(props) {
                                 keyboardType="phone-pad"
                             />
                         </View>
-                        : null}
-                    {state.customStyleIndex != 0 ? state.verificationId ? null :
+                        : null} */}
+                    {/* {state.customStyleIndex != 0 ? state.verificationId ? null :
                         <MaterialButtonDark
                             onPress={onPressLogin}
                             style={styles.materialButtonDark}
@@ -315,7 +269,7 @@ export default function EmailLoginScreen(props) {
                             onPress={onSignIn}
                             style={styles.materialButtonDark}
                         >{language.authorize}</MaterialButtonDark>
-                        : null}
+                        : null} */}
                     {state.verificationId ?
                         <View style={styles.actionLine}>
                             <TouchableOpacity style={styles.actionItem} onPress={CancelLogin}>
@@ -330,8 +284,8 @@ export default function EmailLoginScreen(props) {
                         : null}
                 </View>
             </View>
-            {/* </ImageBackground> */}
-        </KeyboardAvoidingView>
+        
+        // {/* </KeyboardAvoidingView > */ }
     );
 }
 
@@ -356,22 +310,6 @@ const styles = StyleSheet.create({
         width: Dimensions.get('window').width,
         height: Dimensions.get('window').height,
     },
-    topBar: {
-        marginTop: 0,
-        marginLeft: 0,
-        marginRight: 0,
-        height: Dimensions.get('window').height * 0.70,
-    },
-    backButton: {
-        height: 40,
-        width: 40,
-        marginLeft: 20,
-        marginTop: 45
-    },
-    backButtonImage: {
-        height: 30,
-        width: 30,
-    },
     segmentcontrol: {
         color: colors.WHITE,
         fontSize: 18,
@@ -382,7 +320,6 @@ const styles = StyleSheet.create({
         marginLeft: 35,
         marginRight: 35,
     },
-
     box1: {
         height: 50,
         backgroundColor: colors.WHITE,

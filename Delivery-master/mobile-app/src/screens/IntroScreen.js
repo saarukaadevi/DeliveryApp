@@ -115,12 +115,7 @@ export default function IntroScreen(props) {
 
 
     return (
-        // <ImageBackground
-        //     source={require('../../assets/images/bg.jpg')}
-        //     resizeMode="stretch"
-        //     style={styles.imagebg}
-        // >
-        <View style={[styles.topSpace, { backgroundColor: '#fff' }]}>
+        <View style={{flex:1, backgroundColor: '#fff' }}>
             <MaterialButtonDark
                 onPress={onPressLoginEmail}
                 style={styles.materialButtonDark}
@@ -144,12 +139,13 @@ export default function IntroScreen(props) {
             {(Platform.OS == 'ios' && features.AppleLoginEnabled) || features.FacebookLoginEnabled ?
                 <View style={[styles.materialButtonDark3, { alignItems: 'flex-start' }]}>
                     {features.FacebookLoginEnabled ?
-                        <TouchableOpacity style={styles.socialIcon} onPress={FbLogin}>
+                        <TouchableOpacity style={{flexDirection:'row'}} onPress={FbLogin}>
                             <Image
                                 source={require("../../assets/images/image_fb.png")}
                                 resizeMode="contain"
                                 style={styles.socialIconImage}
                             ></Image>
+                            <Text style={{marginHorizontal:14,marginTop:10}}>Facebook</Text>
                         </TouchableOpacity>
                         : null}
                     {Platform.OS == 'ios' && features.AppleLoginEnabled ?
@@ -185,22 +181,22 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height,
     },
     topSpace: {
-        marginTop: 20,
+        marginTop: 0,
         marginLeft: 0,
         marginRight: 0,
         height: Dimensions.get('window').height,
         width: Dimensions.get('window').width,
     },
     materialButtonDark: {
-        height: 55,
-        marginTop: 370,
+        height: 45,
+        marginTop: 250,
         marginLeft: 35,
         marginRight: 35,
         backgroundColor: colors.PINK,
         borderRadius: 15,
     },
     materialButtonDark2: {
-        height: 55,
+        height: 45,
         marginTop: 14,
         marginLeft: 35,
         marginRight: 35,
@@ -208,7 +204,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     materialButtonDark3: {
-        height: 50,
+        height: 40,
         marginTop: 14,
         marginLeft: 35,
         marginRight: 35,
@@ -247,7 +243,7 @@ const styles = StyleSheet.create({
     },
     sepText: {
         color: colors.BLACK,
-        fontSize: 16,
+        fontSize: 12,
         fontFamily: "Roboto-Regular"
     },
     lineLeftFiller: {
@@ -276,8 +272,10 @@ const styles = StyleSheet.create({
         marginTop: 7
     },
     socialIconImage: {
-        width: 35,
-        height: 35
+        width: 27,
+        height: 27,
+        marginTop:7,
+        marginLeft:75
     },
     terms: {
         marginTop: 18,
