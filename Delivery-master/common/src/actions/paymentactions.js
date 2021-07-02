@@ -24,6 +24,7 @@ export const fetchPaymentMethods = () => (dispatch) => (firebase) => {
     fetch(cloud_function_server_url + '/get_providers', {
         method: 'GET',
         headers: {
+            'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
             'Content-Type': 'application/json',
         },
     })

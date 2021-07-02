@@ -1,11 +1,13 @@
 import React, { useState, useRef, useContext } from 'react'
 import MaterialButtonDark from '../components/MaterialButtonDark'
-import { TouchableOpacity, View, Text, StyleSheet,TextInput } from 'react-native'
+import { TouchableOpacity, View, Text, StyleSheet, TextInput } from 'react-native'
 import { language, countries, default_country_code } from 'config'
 import { useSelector, useDispatch } from 'react-redux'
 import { colors } from '../common/theme'
 import { FirebaseContext } from 'common/src'
-const UpdatedLogin = () => {
+import firebase from 'firebase/app'
+const UpdatedLogin = (props) => {
+    const { setLoading,pageActive, navigation } = props
     const { api } = useContext(FirebaseContext)
     const {
         signIn,
@@ -18,10 +20,10 @@ const UpdatedLogin = () => {
     const formatCountries = () => {
         const arr = []
         for (let i = 0; i < countries.length; i++) {
-          arr.push({ label: countries[i].label + ' (+' + countries[i].phone + ')', value: '+' + countries[i].phone, key: countries[i].code })
+            arr.push({ label: countries[i].label + ' (+' + countries[i].phone + ')', value: '+' + countries[i].phone, key: countries[i].code })
         }
         return arr
-      }
+    }
     const [state, setState] = useState({
         email: '',
         password: '',
@@ -55,6 +57,18 @@ const UpdatedLogin = () => {
             }
         }
     }
+    const signin = () => {
+        const email = state.email
+        const password = state.password
+        firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(confirmResult => {
+            console.log('confirmResult', confirmResult)
+            navigation.navigate('RiderRoot')
+          }).catch(function(error) {
+           console.log(error.code);
+           console.log(error.message);
+        })
+        }
     const Forgot_Password = async (email) => {
         if (validateEmail(email)) {
             Alert.alert(
@@ -106,7 +120,7 @@ const UpdatedLogin = () => {
                 />
             </View>
             <MaterialButtonDark
-                onPress={onAction}
+                onPress={signin}
                 style={styles.materialButtonDark}>
                 {language.login_button}
             </MaterialButtonDark>

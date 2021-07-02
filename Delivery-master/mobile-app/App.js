@@ -4,6 +4,7 @@ import * as Font from 'expo-font';
 import AppContainer from './src/navigation/AppNavigator';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
+import firebase from "firebase/app";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -17,7 +18,7 @@ import { Provider } from "react-redux";
 import {
   language
 } from 'config';
-import  {
+import {
   FirebaseProvider,
   store
 } from 'common/src';
@@ -82,7 +83,20 @@ export default function App() {
       }
     }
   }
-
+  useEffect(() => {
+    if (firebase.apps.length === 0) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDA2EhcjKalqsEZLxq3jYiPrctbHlc0Z9A",
+        authDomain: "couriersy.firebaseapp.com",
+        databaseURL: "https://couriersy-default-rtdb.firebaseio.com",
+        projectId: "couriersy",
+        storageBucket: "couriersy.appspot.com",
+        messagingSenderId: "1076815273264",
+        appId: "1:1076815273264:web:82863b7d91c3d5d61bbcf5",
+        measurementId: "G-FGNF2946DY"
+      })
+    }
+  }, [])
 
   return (
     assetsLoaded ?

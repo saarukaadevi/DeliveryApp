@@ -16,7 +16,7 @@ export default function AuthLoadingScreen(props) {
   const { api } = useContext(FirebaseContext);
   const auth = useSelector(state => state.auth);
   const dispatch = useDispatch();
-
+  console.log("Auth", auth.info)
   useEffect(() => {
     if (auth.info) {
       if (auth.info.profile) {
@@ -49,7 +49,7 @@ export default function AuthLoadingScreen(props) {
           dispatch(api.signOut());
           props.navigation.navigate('Intro');
         }
-      }else{
+      } else {
         Alert.alert(language.alert, language.user_issue_contact_admin);
         dispatch(api.signOut());
         props.navigation.navigate('Intro');
@@ -62,7 +62,7 @@ export default function AuthLoadingScreen(props) {
       dispatch(api.clearLoginError());
       props.navigation.navigate('Intro');
     }
-  }, [auth.error,auth.error.msg]);
+  }, [auth.error, auth.error.msg]);
 
   return (
     <View style={styles.container}>

@@ -49,6 +49,7 @@ export const editSettings = (settings) => (dispatch) => (firebase) => {
       fetch(`https://us-central1-seradd.${mainUrl}/baseset`, {
         method: 'POST',
         headers: {
+          'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

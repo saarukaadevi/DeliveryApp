@@ -26,6 +26,7 @@ export const getRouteDetails = async (startLoc, destLoc) => {
     let response = await fetch(`${cloud_function_server_url}/get_route_details`, {
         method: 'POST',
         headers: {
+            'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({

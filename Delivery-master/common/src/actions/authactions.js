@@ -81,6 +81,7 @@ export const fetchUser = () => (dispatch) => (firebase) => {
         fetch(`https://us-central1-seradd.${mainUrl}/baseset`, {
           method: 'POST',
           headers: {
+            'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -176,9 +177,11 @@ export const fetchUser = () => (dispatch) => (firebase) => {
 };
 
 export const validateReferer = async (referralId) => {
+  console.log("validateReferer", referralId, `${cloud_function_server_url}/validate_referrer`)
   const response = await fetch(`${cloud_function_server_url}/validate_referrer`, {
     method: 'POST',
     headers: {
+      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -186,13 +189,20 @@ export const validateReferer = async (referralId) => {
     })
   })
   const json = await response.json();
+  console.log("Validate referal json", json)
   return json;
 };
 
 export const checkUserExists = async (regData) => {
+  console.log("User existing url", `${cloud_function_server_url}/check_user_exists`, regData)
+  console.log("Data", JSON.stringify({
+    email: regData.email,
+    mobile: regData.mobile
+  }))
   const response = await fetch(`${cloud_function_server_url}/check_user_exists`, {
     method: 'POST',
     headers: {
+      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -201,12 +211,14 @@ export const checkUserExists = async (regData) => {
     })
   })
   const json = await response.json();
+  console.log("User exist json", json)
   return json;
 };
 
 export const emailSignUp = (regData) => async (firebase) => {
-
+  console.log("Response data", regData, firebase)
   let url = `${cloud_function_server_url}/user_signup`;
+  console.log("url", url)
 
   const {
     driverDocsRef
@@ -221,10 +233,12 @@ export const emailSignUp = (regData) => async (firebase) => {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
+      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ regData: regData })
   })
+  console.log("response", response.json)
   return await response.json();
 };
 

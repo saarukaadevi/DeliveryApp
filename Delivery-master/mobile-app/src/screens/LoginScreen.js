@@ -215,7 +215,7 @@ export default function EmailLoginScreen(props) {
                         activeTabTextStyle={{ color: colors.GREY.background }}
                     /> */}
 
-                    <UpdatedLogin />
+                    <UpdatedLogin setLoading={setLoading} pageActive={pageActive} navigation={props.navigation}/> 
 
                     {/* {state.customStyleIndex != 0 ?
                         <View style={styles.box1}>
