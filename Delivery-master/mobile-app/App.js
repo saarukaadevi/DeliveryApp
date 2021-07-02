@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Asset } from 'expo-asset';
-import * as Font from 'expo-font';
-import AppContainer from './src/navigation/AppNavigator';
-import * as Notifications from 'expo-notifications';
-import * as Updates from 'expo-updates';
+import React, { useState, useEffect } from 'react'
+import { Asset } from 'expo-asset'
+import * as Font from 'expo-font'
+import AppContainer from './src/navigation/AppNavigator'
+import * as Notifications from 'expo-notifications'
+import * as Updates from 'expo-updates'
+import _ from 'lodash'
 import {
   ActivityIndicator,
   StyleSheet,
@@ -12,33 +13,39 @@ import {
   ImageBackground,
   Dimensions,
   LogBox
-} from "react-native";
-import { Provider } from "react-redux";
+} from 'react-native'
+import { Provider } from 'react-redux'
 import {
   language
-} from 'config';
-import  {
+} from 'config'
+import {
   FirebaseProvider,
   store
-} from 'common/src';
-import AppCommon from './AppCommon';
+} from 'common/src'
+import AppCommon from './AppCommon'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+    shouldSetBadge: false
+  })
+})
 
-export default function App() {
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [updateMsg, setUpdateMsg] = useState('');
+export default function App () {
+  const [assetsLoaded, setAssetsLoaded] = useState(false)
+  const [updateMsg, setUpdateMsg] = useState('')
 
   useEffect(() => {
-    LogBox.ignoreAllLogs(true);
-    onLoad();
-  }, []);
+    LogBox.ignoreAllLogs(true)
+    const _console = _.clone(console)
+    console.warn = message => {
+      if (message.indexOf('Setting a timer') <= -1) {
+        _console.warn(message)
+      }
+    }
+    onLoad()
+  }, [])
 
   const _loadResourcesAsync = async () => {
     return Promise.all([
@@ -46,71 +53,72 @@ export default function App() {
         require('./assets/images/background.jpg'),
         require('./assets/images/logo165x90white.png'),
         require('./assets/images/bg.jpg'),
-        require('./assets/images/intro.jpg'),
+        require('./assets/images/intro.jpg')
       ]),
       Font.loadAsync({
         'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
         'Roboto-Regular': require('./assets/fonts/Roboto-Regular.ttf'),
         'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
-        'Roboto-Light': require('./assets/fonts/Roboto-Light.ttf'),
-      }),
-    ]);
-  };
+        'Roboto-Light': require('./assets/fonts/Roboto-Light.ttf')
+      })
+    ])
+  }
 
   const onLoad = async () => {
     if (__DEV__) {
-      setUpdateMsg(language.loading_assets);
+      setUpdateMsg(language.loading_assets)
       _loadResourcesAsync().then(() => {
-        setAssetsLoaded(true);
-      });
+        setAssetsLoaded(true)
+      })
     } else {
       try {
-        setUpdateMsg(language.checking_updates);
-        const update = await Updates.checkForUpdateAsync();
+        setUpdateMsg(language.checking_updates)
+        const update = await Updates.checkForUpdateAsync()
         if (update.isAvailable) {
-          setUpdateMsg(language.downloading_updates);
-          await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
+          setUpdateMsg(language.downloading_updates)
+          await Updates.fetchUpdateAsync()
+          await Updates.reloadAsync()
         } else {
-          setUpdateMsg(language.loading_assets);
+          setUpdateMsg(language.loading_assets)
           _loadResourcesAsync().then(() => {
-            setAssetsLoaded(true);
-          });
+            setAssetsLoaded(true)
+          })
         }
       } catch (e) {
-        console.log(e);
+        console.log(e)
       }
     }
   }
 
-
   return (
-    assetsLoaded ?
-      <Provider store={store}>
-        <FirebaseProvider>
-          <AppCommon>
-            <AppContainer />
-          </AppCommon>
-        </FirebaseProvider>
-      </Provider>
-      :
-      <View style={styles.container}>
-        <ImageBackground
-          source={require('./assets/images/intro.jpg')}
-          resizeMode="stretch"
-          style={styles.imagebg}
-        >
-          <ActivityIndicator />
-          <Text style={{ paddingBottom: 100 }}>{updateMsg}</Text>
-        </ImageBackground>
-      </View>
-  );
+    assetsLoaded
+      ? (
+        <Provider store={store}>
+          <FirebaseProvider>
+            <AppCommon>
+              <AppContainer />
+            </AppCommon>
+          </FirebaseProvider>
+        </Provider>
+        )
+      : (
+        <View style={styles.container}>
+          <ImageBackground
+            source={require('./assets/images/intro.jpg')}
+            resizeMode='stretch'
+            style={styles.imagebg}
+          >
+            <ActivityIndicator />
+            <Text style={{ paddingBottom: 100 }}>{updateMsg}</Text>
+          </ImageBackground>
+        </View>)
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     alignItems: 'center'
   },
   imagebg: {
@@ -119,7 +127,7 @@ const styles = StyleSheet.create({
     top: 0,
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
     alignItems: 'center'
   }
-});
+})

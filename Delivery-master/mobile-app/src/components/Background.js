@@ -1,17 +1,19 @@
-import React from 'react';
+import React from 'react'
 import {
   StyleSheet,
   ImageBackground
-} from 'react-native';
+} from 'react-native'
 
-export default function Background(props) {
+export default function Background (props) {
   return (
-    <ImageBackground style={styles.imgBackground}
+    <ImageBackground
+      style={styles.imgBackground}
       resizeMode='cover'
-      source={require('../../assets/images/background.jpg')}>
+      source={require('../../assets/images/background.jpg')}
+    >
       {props.children}
     </ImageBackground>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -20,4 +22,4 @@ const styles = StyleSheet.create({
     height: '100%',
     flex: 1
   }
-});
+})
