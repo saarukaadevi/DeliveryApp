@@ -1,871 +1,882 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
-    View,
-    Text,
-    Dimensions,
-    TouchableOpacity,
-    ScrollView,
-    KeyboardAvoidingView,
-    Image,
-    TouchableWithoutFeedback,
-    Platform,
-    Alert
-} from 'react-native';
-import app from "firebase/app";
-import "firebase/auth";
-import { Icon, Button, Header, Input } from 'react-native-elements'
-import { colors } from '../common/theme';
-var { height } = Dimensions.get('window');
+  View,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Image,
+  Platform,
+  Alert
+} from 'react-native'
+import app from 'firebase/app'
+import 'firebase/auth'
+import { Icon, Button, Input } from 'react-native-elements'
+import { colors } from '../common/theme'
 import {
-    language,
-    countries,
-    default_country_code,
-    features
-} from 'config';
-import RadioForm from 'react-native-simple-radio-button';
-import RNPickerSelect from 'react-native-picker-select';
-import * as Permissions from 'expo-permissions';
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+  language,
+  countries,
+  default_country_code,
+  features
+} from 'config'
+import RadioForm from 'react-native-simple-radio-button'
+import RNPickerSelect from 'react-native-picker-select'
+import * as Permissions from 'expo-permissions'
+import * as ImagePicker from 'expo-image-picker'
+import { Ionicons } from '@expo/vector-icons'
+const { height } = Dimensions.get('window')
 
+export default function Registration (props) {
+  const { setLoading, navigation } = props
+  const [state, setState] = useState({
+    usertype: 'rider',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
+    referralId: '',
+    vehicleNumber: '',
+    vehicleMake: '',
+    vehicleModel: '',
+    carType: props.cars && props.cars.length > 0 ? props.cars[0].value : '',
+    bankAccount: '',
+    bankCode: '',
+    bankName: '',
+    licenseImage: null,
+    other_info: '',
+    password: ''
+  })
+  const [role, setRole] = useState(0)
+  const [capturedImage, setCapturedImage] = useState(null)
+  const [confirmpassword, setConfirmPassword] = useState('')
+  const [countryCode, setCountryCode] = useState('+' + default_country_code.phone)
+  const [mobileWithoutCountry, setMobileWithoutCountry] = useState('')
+  const radio_props = [
+    { label: language.no, value: 0 },
+    { label: language.yes, value: 1 }
+  ]
 
-export default function Registration(props) {
-    const { setLoading,navigation } = props
-    const [state, setState] = useState({
-        usertype: 'rider',
-        firstName: '',
-        lastName: '',
-        email: '',
-        mobile: '',
-        referralId: '',
-        vehicleNumber: '',
-        vehicleMake: '',
-        vehicleModel: '',
-        carType: props.cars && props.cars.length > 0 ? props.cars[0].value : '',
-        bankAccount: '',
-        bankCode: '',
-        bankName: '',
-        licenseImage: null,
-        other_info: '',
-        password: ''
-    });
-    const [role, setRole] = useState(0);
-    const [capturedImage, setCapturedImage] = useState(null);
-    const [confirmpassword, setConfirmPassword] = useState('');
-    const [countryCode, setCountryCode] = useState("+" + default_country_code.phone);
-    const [mobileWithoutCountry, setMobileWithoutCountry] = useState('');
-    const radio_props = [
-        { label: language.no, value: 0 },
-        { label: language.yes, value: 1 }
-    ];
-
-    const formatCountries = () => {
-        let arr = [];
-        for (let i = 0; i < countries.length; i++) {
-            arr.push({ label: countries[i].label + " (+" + countries[i].phone + ")", value: "+" + countries[i].phone, key: countries[i].code });
-        }
-        return arr;
+  const formatCountries = () => {
+    const arr = []
+    for (let i = 0; i < countries.length; i++) {
+      arr.push({ label: countries[i].label + ' (+' + countries[i].phone + ')', value: '+' + countries[i].phone, key: countries[i].code })
     }
+    return arr
+  }
 
-    const CapturePhoto = async () => {
-        const { status: cameraStatus } = await Permissions.askAsync(Permissions.CAMERA)
-        const { status: cameraRollStatus } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+  const CapturePhoto = async () => {
+    const { status: cameraStatus } = await Permissions.askAsync(Permissions.CAMERA)
+    const { status: cameraRollStatus } = await Permissions.askAsync(Permissions.CAMERA_ROLL)
 
-        if (cameraStatus === 'granted' && cameraRollStatus === 'granted') {
-            let result = await ImagePicker.launchImageLibraryAsync({
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1.0,
-                base64: true
-            });
+    if (cameraStatus === 'granted' && cameraRollStatus === 'granted') {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1.0,
+        base64: true
+      })
 
-            if (!result.cancelled) {
-                let data = 'data:image/jpeg;base64,' + result.base64;
-                setCapturedImage(result.uri);
-                const blob = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.onload = function () {
-                        resolve(xhr.response);
-                    };
-                    xhr.onerror = function () {
-                        Alert.alert(language.alert, language.image_upload_error);
-                        setLoading(false);
-                    };
-                    xhr.responseType = 'blob';
-                    xhr.open('GET', Platform.OS == 'ios' ? data : result.uri, true);
-                    xhr.send(null);
-                });
-                if (blob) {
-                    setState({ ...state, licenseImage: blob });
-                }
+      if (!result.cancelled) {
+        const data = 'data:image/jpeg;base64,' + result.base64
+        setCapturedImage(result.uri)
+        const blob = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.onload = function () {
+            resolve(xhr.response)
+          }
+          xhr.onerror = function () {
+            Alert.alert(language.alert, language.image_upload_error)
+            setLoading(false)
+          }
+          xhr.responseType = 'blob'
+          xhr.open('GET', Platform.OS == 'ios' ? data : result.uri, true)
+          xhr.send(null)
+        })
+        if (blob) {
+          setState({ ...state, licenseImage: blob })
+        }
+      }
+    } else {
+      Alert.alert(language.alert, language.camera_permission_error)
+    }
+  }
+  const onsuccess = () => {
+    setLoading(false)
+    navigation.navigate('Login')
+  }
+  const signup = (state) => {
+    const email = state.email
+    const password = state.password
+    app.auth().createUserWithEmailAndPassword(email, password)
+      .then(result => {
+        onsuccess(result, email)
+      })
+      .catch(error => {
+        if (error.message.includes('another account')) {
+          navigation.navigate('Login')
+        }
+        console.log('Error', error.message)
+        setLoading(false)
+        console.log(error)
+      })
+  }
+  // upload cancel
+  const cancelPhoto = () => {
+    setCapturedImage(null)
+  }
+
+  const setUserType = (value) => {
+    if (value === 0) {
+      setState({ ...state, usertype: 'rider' })
+    } else {
+      setState({ ...state, usertype: 'driver' })
+    }
+  }
+
+  const validateMobile = () => {
+    console.log('In validate mobile')
+    let mobileValid = true
+    if (mobileWithoutCountry.length < 6) {
+      mobileValid = false
+      Alert.alert(language.alert, language.mobile_no_blank_error)
+    }
+    return mobileValid
+  }
+
+  const validatePassword = (complexity) => {
+    console.log('In validate password')
+    let passwordValid = true
+    const regx1 = /^([a-zA-Z0-9@*#]{8,15})$/
+    const regx2 = /(?=^.{6,10}$)(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\s).*$/
+    if (complexity === 'any') {
+      passwordValid = state.password.length >= 1
+      if (!passwordValid) {
+        Alert.alert(language.alert, language.password_blank_messege)
+      }
+    } else if (complexity === 'alphanumeric') {
+      passwordValid = regx1.test(state.password)
+      if (!passwordValid) {
+        Alert.alert(language.alert, language.password_alphaNumeric_check)
+      }
+    } else if (complexity === 'complex') {
+      passwordValid = regx2.test(state.password)
+      if (!passwordValid) {
+        Alert.alert(language.alert, language.password_complexity_check)
+      }
+    } else if (state.password !== confirmpassword) {
+      passwordValid = false
+      if (!passwordValid) {
+        Alert.alert(language.alert, language.confrim_password_not_match_err)
+      }
+    }
+    return passwordValid
+  }
+
+  console.log('state', state)
+  // register button press for validation
+  const onPressRegister = () => {
+    const { onPressRegister } = props
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    if (re.test(state.email)) {
+      console.log('In retest')
+      if (state.usertype === 'driver' && state.licenseImage == null) {
+        Alert.alert(language.alert, language.proper_input_licenseimage)
+      } else {
+        console.log('In else', state.usertype)
+        if ((state.usertype === 'driver' && state.vehicleNumber.length > 1) || state.usertype === 'rider') {
+          if (state.firstName.length > 0 && state.lastName.length > 0) {
+            if (validatePassword('alphanumeric')) {
+              if (validateMobile()) {
+                console.log('Next to validate mobile')
+                onPressRegister(state)
+              } else {
+                Alert.alert(language.alert, language.mobile_no_blank_error)
+              }
             }
+          } else {
+            Alert.alert(language.alert, language.proper_input_name)
+          }
         } else {
-            Alert.alert(language.alert, language.camera_permission_error)
+          Alert.alert(language.alert, language.proper_input_vehicleno)
         }
+      }
+    } else {
+      Alert.alert(language.alert, language.proper_email)
     }
-    const onsuccess = () => {
-        setLoading(false);
-        navigation.navigate('Login');
-    }
-      const signup = (state) => {
-        const email = state.email
-        const password = state.password
-        app.auth().createUserWithEmailAndPassword(email, password)
-            .then(result => {
-                onsuccess(result, email)
-            })
-            .catch(error => {
-                if(error.message.includes('another account')){
-                    navigation.navigate('Login')
-                }
-                console.log("Error", error.message)
-                setLoading(false);
-                console.log(error)
-            })
-    }
-    //upload cancel
-    const cancelPhoto = () => {
-        setCapturedImage(null);
-    }
+  }
 
-    const setUserType = (value) => {
-        if (value == 0) {
-            setState({ ...state, usertype: 'rider' });
-        } else {
-            setState({ ...state, usertype: 'driver' });
-        }
-    }
+  return (
+  // <Background>
 
-    validateMobile = () => {
-        console.log("In validate mobile")
-        let mobileValid = true;
-        if (mobileWithoutCountry.length < 6) {
-            mobileValid = false;
-            Alert.alert(language.alert, language.mobile_no_blank_error);
-        }
-        return mobileValid;
-    }
+  // <Header
+  //     backgroundColor={colors.TRANSPARENT}
+  //     leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 35, component: TouchableWithoutFeedback, onPress: props.onPressBack }}
+  //     containerStyle={styles.headerContainerStyle}
+  //     innerContainerStyles={styles.headerInnerContainer}
+  // />
+    <ScrollView style={styles.scrollViewStyle} showsVerticalScrollIndicator={false}>
+      <View style={styles.logo}>
+        <Image source={require('../../assets/images/logo165x90white.png')} />
+      </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} style={styles.form}>
+        <View style={styles.containerStyle}>
+          <Text style={styles.headerStyle}>{language.registration_title}</Text>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='user'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              editable
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.first_name_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={state.firstName}
+              keyboardType='email-address'
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => { setState({ ...state, firstName: text }) }}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+            />
+          </View>
 
-    validatePassword = (complexity) => {
-        console.log("In validate password")
-        let passwordValid = true;
-        const regx1 = /^([a-zA-Z0-9@*#]{8,15})$/
-        const regx2 = /(?=^.{6,10}$)(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\s).*$/
-        if (complexity == 'any') {
-            passwordValid = state.password.length >= 1;
-            if (!passwordValid) {
-                Alert.alert(language.alert, language.password_blank_messege);
-            }
-        }
-        else if (complexity == 'alphanumeric') {
-            passwordValid = regx1.test(state.password);
-            if (!passwordValid) {
-                Alert.alert(language.alert, language.password_alphaNumeric_check);
-            }
-        }
-        else if (complexity == 'complex') {
-            passwordValid = regx2.test(password);
-            if (!passwordValid) {
-                Alert.alert(language.alert, language.password_complexity_check);
-            }
-        }
-        else if (state.password != confirmpassword) {
-            passwordValid = false;
-            if (!passwordValid) {
-                Alert.alert(language.alert, language.confrim_password_not_match_err);
-            }
-        }
-        return passwordValid
-    }
-
-    console.log("state", state)
-    //register button press for validation
-    onPressRegister = () => {
-        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-        if (re.test(state.email)) {
-            console.log("In retest")
-            if (state.usertype == 'driver' && state.licenseImage == null) {
-                Alert.alert(language.alert, language.proper_input_licenseimage);
-            } else {
-                console.log("In else", state.usertype)
-                if ((state.usertype == 'driver' && state.vehicleNumber.length > 1) || state.usertype == 'rider') {
-                    if (state.firstName.length > 0 && state.lastName.length > 0) {
-                        if (validatePassword('alphanumeric')) {
-                            if (validateMobile()) {
-                                console.log("Next to validate mobile")
-                                onPressRegister(state);
-                            } else {
-                                Alert.alert(language.alert, language.mobile_no_blank_error);
-                            }
-                        }
-                    } else {
-                        Alert.alert(language.alert, language.proper_input_name);
-                    }
-                } else {
-                    Alert.alert(language.alert, language.proper_input_vehicleno);
-                }
-            }
-        } else {
-            Alert.alert(language.alert, language.proper_email);
-        }
-    }
-   
-
-    
-    return (
-        // <Background>
-
-        // <Header
-        //     backgroundColor={colors.TRANSPARENT}
-        //     leftComponent={{ icon: 'ios-arrow-back', type: 'ionicon', color: colors.WHITE, size: 35, component: TouchableWithoutFeedback, onPress: props.onPressBack }}
-        //     containerStyle={styles.headerContainerStyle}
-        //     innerContainerStyles={styles.headerInnerContainer}
-        // />
-        <ScrollView style={styles.scrollViewStyle} showsVerticalScrollIndicator={false}>
-            <View style={styles.logo}>
-                <Image source={require('../../assets/images/logo165x90white.png')} />
-            </View>
-            <KeyboardAvoidingView behavior={Platform.OS == 'ios' ? "padding" : "padding"} style={styles.form}>
-                <View style={styles.containerStyle}>
-                    <Text style={styles.headerStyle}>{language.registration_title}</Text>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='user'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            editable={true}
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.first_name_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={state.firstName}
-                            keyboardType={'email-address'}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => { setState({ ...state, firstName: text }) }}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                        />
-                    </View>
-
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='user'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            editable={true}
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.last_name_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={state.lastName}
-                            keyboardType={'email-address'}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => { setState({ ...state, lastName: text }) }}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='envelope'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={18}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.email_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={state.email}
-                            keyboardType={'email-address'}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => { setState({ ...state, email: text }) }}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='lock'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.password_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={state.password}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => setState({ ...state, password: text })}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                            secureTextEntry={true}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='lock'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.confrim_password_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={confirmpassword}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => setConfirmPassword(text)}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                            secureTextEntry={true}
-                        />
-                    </View>
-                    <View style={[styles.textInputContainerStyle, { marginBottom: 5 }]}>
-                        <Icon
-                            name='mobile-phone'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={34}
-                            containerStyle={[styles.iconContainer, { marginTop: 5 }]}
-                        />
-                        <RNPickerSelect
-                            placeholder={{ label: language.select_country, value: language.select_country }}
-                            value={countryCode}
-                            useNativeAndroidPickerStyle={false}
-                            style={{
-                                inputIOS: styles.pickerStyle,
-                                inputAndroid: styles.pickerStyle,
-                            }}
-                            onValueChange={
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='user'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              editable
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.last_name_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={state.lastName}
+              keyboardType='email-address'
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => { setState({ ...state, lastName: text }) }}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='envelope'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={18}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.email_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={state.email}
+              keyboardType='email-address'
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => { setState({ ...state, email: text }) }}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='lock'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.password_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={state.password}
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => setState({ ...state, password: text })}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+              secureTextEntry
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='lock'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.confrim_password_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={confirmpassword}
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => setConfirmPassword(text)}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+              secureTextEntry
+            />
+          </View>
+          <View style={[styles.textInputContainerStyle, { marginBottom: 5 }]}>
+            <Icon
+              name='mobile-phone'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={34}
+              containerStyle={[styles.iconContainer, { marginTop: 5 }]}
+            />
+            <RNPickerSelect
+              placeholder={{ label: language.select_country, value: language.select_country }}
+              value={countryCode}
+              useNativeAndroidPickerStyle={false}
+              style={{
+                inputIOS: styles.pickerStyle,
+                inputAndroid: styles.pickerStyle
+              }}
+              onValueChange={
                                 (text) => {
-                                    setCountryCode(text);
-                                    let formattedNum = mobileWithoutCountry.replace(/ /g, '');
-                                    formattedNum = text + formattedNum.replace(/-/g, '');
-                                    setState({ ...state, mobile: formattedNum })
+                                  setCountryCode(text)
+                                  let formattedNum = mobileWithoutCountry.replace(/ /g, '')
+                                  formattedNum = text + formattedNum.replace(/-/g, '')
+                                  setState({ ...state, mobile: formattedNum })
                                 }
                             }
-                            items={formatCountries()}
-                            disabled={features.AllowCountrySelection ? false : true}
-                            Icon={() => { return <Ionicons style={{ top: 5 }} name="md-arrow-down" size={24} color="gray" />; }}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='mobile-phone'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={34}
-                            containerStyle={styles.iconContainer}
-                        />
-                        <Input
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.mobile_no_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={mobileWithoutCountry}
-                            keyboardType={'number-pad'}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={
+              items={formatCountries()}
+              disabled={!features.AllowCountrySelection}
+              Icon={() => { return <Ionicons style={{ top: 5 }} name='md-arrow-down' size={24} color='gray' /> }}
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='mobile-phone'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={34}
+              containerStyle={styles.iconContainer}
+            />
+            <Input
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.mobile_no_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={mobileWithoutCountry}
+              keyboardType='number-pad'
+              inputStyle={styles.inputTextStyle}
+              onChangeText={
                                 (text) => {
-                                    setMobileWithoutCountry(text)
-                                    let formattedNum = text.replace(/ /g, '');
-                                    formattedNum = countryCode + formattedNum.replace(/-/g, '');
-                                    setState({ ...state, mobile: formattedNum })
+                                  setMobileWithoutCountry(text)
+                                  let formattedNum = text.replace(/ /g, '')
+                                  formattedNum = countryCode + formattedNum.replace(/-/g, '')
+                                  setState({ ...state, mobile: formattedNum })
                                 }
                             }
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='lock'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={styles.iconContainer}
-                        />
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='lock'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={styles.iconContainer}
+            />
 
-                        <Input
-                            editable={true}
-                            underlineColorAndroid={colors.TRANSPARENT}
-                            placeholder={language.referral_id_placeholder}
-                            placeholderTextColor={colors.BLACK}
-                            value={state.referralId}
-                            inputStyle={styles.inputTextStyle}
-                            onChangeText={(text) => { setState({ ...state, referralId: text }) }}
-                            inputContainerStyle={styles.inputContainerStyle}
-                            containerStyle={styles.textInputStyle}
-                        />
-                    </View>
-                    <View style={styles.textInputContainerStyle}>
-                        <Icon
-                            name='user'
-                            type='font-awesome'
-                            color={colors.BLACK}
-                            size={24}
-                            containerStyle={[styles.iconContainer, { paddingTop: 28 }]}
-                        />
-                        <Text style={{ marginLeft: 20, marginTop: 0, color: colors.BLACK }}>{language.register_as_driver}</Text>
-                        <RadioForm
-                            radio_props={radio_props}
-                            initial={role}
-                            formHorizontal={true}
-                            labelHorizontal={true}
-                            buttonColor={colors.BLACK}
-                            labelColor={colors.BLACK}
-                            style={{ marginLeft: 10 }}
-                            labelStyle={{ marginRight: 20 }}
-                            selectedButtonColor={colors.BLACK}
-                            selectedLabelColor={colors.BLACK}
-                            onPress={(value) => {
-                                setRole(value);
-                                setUserType(value);
-                            }}
-                        />
-                    </View>
-                    {state.usertype == 'driver' ?
-                        <View style={[styles.textInputContainerStyle, { marginTop: 10, marginBottom: 10 }]}>
-                            <Icon
-                                name='truck-fast'
-                                type='material-community'
-                                color={colors.BLACK}
-                                size={18}
-                                containerStyle={[styles.iconContainer, { paddingTop: 20 }]}
-                            />
-                            {props.cars ?
-                                <RNPickerSelect
-                                    placeholder={{}}
-                                    value={state.carType}
-                                    useNativeAndroidPickerStyle={false}
-                                    style={{
-                                        inputIOS: styles.pickerStyle,
-                                        placeholder: {
-                                            color: 'BLACK'
-                                        },
-                                        inputAndroid: styles.pickerStyle
-                                    }}
-                                    onValueChange={(value) => setState({ ...state, carType: value })}
-                                    items={props.cars}
-                                    Icon={() => { return <Ionicons style={{ top: 5 }} name="md-arrow-down" size={24} color="gray" />; }}
-                                />
-                                : null}
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='truck-fast'
-                                type='material-community'
-                                color={colors.BLACK}
-                                size={18}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                returnKeyType={'next'}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.vehicle_model_name}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.vehicleMake}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, vehicleMake: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='truck-fast'
-                                type='material-community'
-                                color={colors.BLACK}
-                                size={18}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.vehicle_model_no}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.vehicleModel}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, vehicleModel: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='truck-fast'
-                                type='material-community'
-                                color={colors.BLACK}
-                                size={18}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.vehicle_reg_no}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.vehicleNumber}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, vehicleNumber: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='truck-fast'
-                                type='material-community'
-                                color={colors.BLACK}
-                                size={18}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.other_info}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.other_info}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, other_info: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='numeric'
-                                type={'material-community'}
-                                color={colors.BLACK}
-                                size={20}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.bankName}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.bankName}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, bankName: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='numeric'
-                                type={'material-community'}
-                                color={colors.BLACK}
-                                size={20}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.bankCode}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.bankCode}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, bankCode: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        <View style={styles.textInputContainerStyle}>
-                            <Icon
-                                name='numeric'
-                                type={'material-community'}
-                                color={colors.BLACK}
-                                size={20}
-                                containerStyle={styles.iconContainer}
-                            />
-                            <Input
-                                editable={true}
-                                underlineColorAndroid={colors.TRANSPARENT}
-                                placeholder={language.bankAccount}
-                                placeholderTextColor={colors.BLACK}
-                                value={state.bankAccount}
-                                inputStyle={styles.inputTextStyle}
-                                onChangeText={(text) => { setState({ ...state, bankAccount: text }) }}
-                                inputContainerStyle={styles.inputContainerStyle}
-                                containerStyle={styles.textInputStyle}
-                            />
-                        </View>
-                        : null}
-                    {state.usertype == 'driver' ?
-                        capturedImage ?
-                            <View style={styles.imagePosition}>
-                                <TouchableOpacity style={styles.photoClick} onPress={cancelPhoto}>
-                                    <Image source={require('../../assets/images/cross.png')} resizeMode={'contain'} style={styles.imageStyle} />
-                                </TouchableOpacity>
-                                <Image source={{ uri: capturedImage }} style={styles.photoResult} resizeMode={'cover'} />
-                            </View>
-                            :
-                            <View style={styles.capturePhoto}>
-                                <View>
-                                    {
-                                        state.imageValid ?
-                                            <Text style={styles.capturePhotoTitle}>{language.upload_driving_license}</Text>
-                                            :
-                                            <Text style={styles.errorPhotoTitle}>{language.upload_driving_license}</Text>
+            <Input
+              editable
+              underlineColorAndroid={colors.TRANSPARENT}
+              placeholder={language.referral_id_placeholder}
+              placeholderTextColor={colors.BLACK}
+              value={state.referralId}
+              inputStyle={styles.inputTextStyle}
+              onChangeText={(text) => { setState({ ...state, referralId: text }) }}
+              inputContainerStyle={styles.inputContainerStyle}
+              containerStyle={styles.textInputStyle}
+            />
+          </View>
+          <View style={styles.textInputContainerStyle}>
+            <Icon
+              name='user'
+              type='font-awesome'
+              color={colors.BLACK}
+              size={24}
+              containerStyle={[styles.iconContainer, { paddingTop: 28 }]}
+            />
+            <Text style={{ marginLeft: 20, marginTop: 0, color: colors.BLACK }}>{language.register_as_driver}</Text>
+            <RadioForm
+              radio_props={radio_props}
+              initial={role}
+              formHorizontal
+              labelHorizontal
+              buttonColor={colors.BLACK}
+              labelColor={colors.BLACK}
+              style={{ marginLeft: 10 }}
+              labelStyle={{ marginRight: 20 }}
+              selectedButtonColor={colors.BLACK}
+              selectedLabelColor={colors.BLACK}
+              onPress={(value) => {
+                setRole(value)
+                setUserType(value)
+              }}
+            />
+          </View>
+          {state.usertype === 'driver'
+            ? (
+              <View style={[styles.textInputContainerStyle, { marginTop: 10, marginBottom: 10 }]}>
+                <Icon
+                  name='truck-fast'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={18}
+                  containerStyle={[styles.iconContainer, { paddingTop: 20 }]}
+                />
+                {props.cars
+                  ? <RNPickerSelect
+                      placeholder={{}}
+                      value={state.carType}
+                      useNativeAndroidPickerStyle={false}
+                      style={{
+                        inputIOS: styles.pickerStyle,
+                        placeholder: {
+                          color: 'BLACK'
+                        },
+                        inputAndroid: styles.pickerStyle
+                      }}
+                      onValueChange={(value) => setState({ ...state, carType: value })}
+                      items={props.cars}
+                      Icon={() => { return <Ionicons style={{ top: 5 }} name='md-arrow-down' size={24} color='gray' /> }}
+                    />
+                  : null}
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='truck-fast'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={18}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  returnKeyType='next'
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.vehicle_model_name}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.vehicleMake}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, vehicleMake: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='truck-fast'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={18}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.vehicle_model_no}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.vehicleModel}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, vehicleModel: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='truck-fast'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={18}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.vehicle_reg_no}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.vehicleNumber}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, vehicleNumber: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='truck-fast'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={18}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.other_info}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.other_info}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, other_info: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='numeric'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={20}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.bankName}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.bankName}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, bankName: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='numeric'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={20}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.bankCode}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.bankCode}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, bankCode: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? (
+              <View style={styles.textInputContainerStyle}>
+                <Icon
+                  name='numeric'
+                  type='material-community'
+                  color={colors.BLACK}
+                  size={20}
+                  containerStyle={styles.iconContainer}
+                />
+                <Input
+                  editable
+                  underlineColorAndroid={colors.TRANSPARENT}
+                  placeholder={language.bankAccount}
+                  placeholderTextColor={colors.BLACK}
+                  value={state.bankAccount}
+                  inputStyle={styles.inputTextStyle}
+                  onChangeText={(text) => { setState({ ...state, bankAccount: text }) }}
+                  inputContainerStyle={styles.inputContainerStyle}
+                  containerStyle={styles.textInputStyle}
+                />
+              </View>
+              )
+            : null}
+          {state.usertype === 'driver'
+            ? capturedImage
+                ? (
+                  <View style={styles.imagePosition}>
+                    <TouchableOpacity style={styles.photoClick} onPress={cancelPhoto}>
+                      <Image source={require('../../assets/images/cross.png')} resizeMode='contain' style={styles.imageStyle} />
+                    </TouchableOpacity>
+                    <Image source={{ uri: capturedImage }} style={styles.photoResult} resizeMode='cover' />
+                  </View>
+                  )
+                : (
+                  <View style={styles.capturePhoto}>
+                    <View>
+                      {
+                                        state.imageValid
+                                          ? <Text style={styles.capturePhotoTitle}>{language.upload_driving_license}</Text>
+                                          : <Text style={styles.errorPhotoTitle}>{language.upload_driving_license}</Text>
                                     }
 
-                                </View>
-                                <View style={styles.capturePicClick}>
-                                    <TouchableOpacity style={styles.flexView1} onPress={CapturePhoto}>
-                                        <View>
-                                            <View style={styles.imageFixStyle}>
-                                                <Image source={require('../../assets/images/camera.png')} resizeMode={'contain'} style={styles.imageStyle2} />
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                    <View style={styles.myView}>
-                                        <View style={styles.myView1} />
-                                    </View>
-                                    <View style={styles.myView2}>
-                                        <View style={styles.myView3}>
-                                            <Text style={styles.textStyle}>{language.image_size_warning}</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-                        : null}
-                    <View style={styles.buttonContainer}>
-                        <Button
-                            onPress={()=>signup(state)}
-                            title={language.register_button}
-                            loading={props.loading}
-                            titleStyle={styles.buttonTitle}
-                            buttonStyle={styles.registerButton}
-                        />
                     </View>
-                    <View style={styles.gapView} />
-                </View>
-            </KeyboardAvoidingView>
-        </ScrollView>
-        // </Background>
-    );
+                    <View style={styles.capturePicClick}>
+                      <TouchableOpacity style={styles.flexView1} onPress={CapturePhoto}>
+                        <View>
+                          <View style={styles.imageFixStyle}>
+                            <Image source={require('../../assets/images/camera.png')} resizeMode='contain' style={styles.imageStyle2} />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                      <View style={styles.myView}>
+                        <View style={styles.myView1} />
+                      </View>
+                      <View style={styles.myView2}>
+                        <View style={styles.myView3}>
+                          <Text style={styles.textStyle}>{language.image_size_warning}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                  )
+            : null}
+          <View style={styles.buttonContainer}>
+            <Button
+              onPress={() => signup(state)}
+              title={language.register_button}
+              loading={props.loading}
+              titleStyle={styles.buttonTitle}
+              buttonStyle={styles.registerButton}
+            />
+          </View>
+          <View style={styles.gapView} />
+        </View>
+      </KeyboardAvoidingView>
+    </ScrollView>
+  )
 };
 
 const styles = {
-    headerContainerStyle: {
-        backgroundColor: colors.TRANSPARENT,
-        borderBottomWidth: 0,
-        marginTop: 0
-    },
-    headerInnerContainer: {
-        marginLeft: 10,
-        marginRight: 10
-    },
-    inputContainerStyle: {
-        borderBottomWidth: 1,
-        borderBottomColor: colors.TRANSPARENT  //underline
+  headerContainerStyle: {
+    backgroundColor: colors.TRANSPARENT,
+    borderBottomWidth: 0,
+    marginTop: 0
+  },
+  headerInnerContainer: {
+    marginLeft: 10,
+    marginRight: 10
+  },
+  inputContainerStyle: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.TRANSPARENT // underline
 
-    },
-    textInputStyle: {
-        marginLeft: 10,
-    },
-    iconContainer: {
-        paddingBottom: 28
-    },
-    gapView: {
-        height: 40,
-        width: '100%'
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        borderRadius: 40,
-    },
-    registerButton: {
-        backgroundColor: colors.PINK,
-        width: 180,
-        height: 50,
-        borderColor: colors.TRANSPARENT,
-        borderWidth: 0,
-        marginTop: 30,
-        borderRadius: 15,
-    },
-    buttonTitle: {
-        fontSize: 15
-    },
-    pickerStyle: {
-        color: colors.BLACK,
-        width: 200,
-        fontSize: 15,
-        height: 40,
-        marginLeft: 20,
-        marginBottom: 23,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.WHITE,
-    },
-    inputTextStyle: {
-        color: colors.BLACK,
-        fontSize: 13,
-        marginLeft: 0,
-        height: 32,
-    },
-    errorMessageStyle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginLeft: 0
-    },
-    containerStyle: {
-        flexDirection: 'column',
-        marginTop: 20
-    },
-    form: {
-        flex: 1,
-    },
-    logo: {
-        width: '100%',
-        justifyContent: "flex-start",
-        marginTop: 10,
-        alignItems: 'center',
-    },
-    scrollViewStyle: {
-        height: height,
-        backgroundColor: colors.WHITE
-    },
-    textInputContainerStyle: {
-        flexDirection: 'row',
-        alignItems: "center",
-        marginLeft: 20,
-        marginRight: 20,
-        paddingLeft: 15,
-        paddingRight: 15,
-        paddingTop: 10,
-    },
-    headerStyle: {
-        fontSize: 26,
-        color: colors.BLACK,
-        textAlign: 'center',
-        flexDirection: 'row',
-        marginTop: -70
-    },
+  },
+  textInputStyle: {
+    marginLeft: 10
+  },
+  iconContainer: {
+    paddingBottom: 28
+  },
+  gapView: {
+    height: 40,
+    width: '100%'
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderRadius: 40
+  },
+  registerButton: {
+    backgroundColor: colors.PINK,
+    width: 180,
+    height: 50,
+    borderColor: colors.TRANSPARENT,
+    borderWidth: 0,
+    marginTop: 30,
+    borderRadius: 15
+  },
+  buttonTitle: {
+    fontSize: 15
+  },
+  pickerStyle: {
+    color: colors.BLACK,
+    width: 200,
+    fontSize: 15,
+    height: 40,
+    marginLeft: 20,
+    marginBottom: 23,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.WHITE
+  },
+  inputTextStyle: {
+    color: colors.BLACK,
+    fontSize: 13,
+    marginLeft: 0,
+    height: 32
+  },
+  errorMessageStyle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 0
+  },
+  containerStyle: {
+    flexDirection: 'column',
+    marginTop: 20
+  },
+  form: {
+    flex: 1
+  },
+  logo: {
+    width: '100%',
+    justifyContent: 'flex-start',
+    marginTop: 10,
+    alignItems: 'center'
+  },
+  scrollViewStyle: {
+    height: height,
+    backgroundColor: colors.WHITE
+  },
+  textInputContainerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginRight: 20,
+    paddingLeft: 15,
+    paddingRight: 15,
+    paddingTop: 10
+  },
+  headerStyle: {
+    fontSize: 26,
+    color: colors.BLACK,
+    textAlign: 'center',
+    flexDirection: 'row',
+    marginTop: -70
+  },
 
-    capturePhoto: {
-        width: '80%',
-        alignSelf: 'center',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        borderRadius: 10,
-        backgroundColor: colors.LIGHT_GREY,
-        marginLeft: 20,
-        marginRight: 20,
-        paddingTop: 15,
-        paddingBottom: 10,
-        marginTop: 15
-    },
-    capturePhotoTitle: {
-        color: colors.BLACK,
-        fontSize: 14,
-        textAlign: 'center',
-        paddingBottom: 15,
+  capturePhoto: {
+    width: '80%',
+    alignSelf: 'center',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: colors.LIGHT_GREY,
+    marginLeft: 20,
+    marginRight: 20,
+    paddingTop: 15,
+    paddingBottom: 10,
+    marginTop: 15
+  },
+  capturePhotoTitle: {
+    color: colors.BLACK,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingBottom: 15
 
-    },
-    errorPhotoTitle: {
-        color: colors.RED,
-        fontSize: 13,
-        textAlign: 'center',
-        paddingBottom: 15,
-    },
-    photoResult: {
-        alignSelf: 'center',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        borderRadius: 10,
-        marginLeft: 20,
-        marginRight: 20,
-        paddingTop: 15,
-        paddingBottom: 10,
-        marginTop: 15,
-        width: '80%',
-        height: height / 4
-    },
-    imagePosition: {
-        position: 'relative'
-    },
-    photoClick: {
-        paddingRight: 48,
-        position: 'absolute',
-        zIndex: 1,
-        marginTop: 18,
-        alignSelf: 'flex-end'
-    },
-    capturePicClick: {
-        backgroundColor: colors.LIGHT_GREY,
-        flexDirection: 'row',
-        position: 'relative',
-        zIndex: 1
-    },
-    imageStyle: {
-        width: 30,
-        height: height / 15
-    },
-    flexView1: {
-        flex: 12
-    },
-    imageFixStyle: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    imageStyle2: {
-        width: 150,
-        height: height / 15
-    },
-    myView: {
-        flex: 2,
-        height: 50,
-        width: 1,
-        alignItems: 'center'
-    },
-    myView1: {
-        height: height / 18,
-        width: 1.5,
-        backgroundColor: colors.GREY.btnSecondary,
-        alignItems: 'center',
-        marginTop: 10
-    },
-    myView2: {
-        flex: 20,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    myView3: {
-        flex: 2.2,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    textStyle: {
-        color: colors.GREY.btnPrimary,
-        fontFamily: 'Roboto-Bold',
-        fontSize: 13
-    }
+  },
+  errorPhotoTitle: {
+    color: colors.RED,
+    fontSize: 13,
+    textAlign: 'center',
+    paddingBottom: 15
+  },
+  photoResult: {
+    alignSelf: 'center',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    borderRadius: 10,
+    marginLeft: 20,
+    marginRight: 20,
+    paddingTop: 15,
+    paddingBottom: 10,
+    marginTop: 15,
+    width: '80%',
+    height: height / 4
+  },
+  imagePosition: {
+    position: 'relative'
+  },
+  photoClick: {
+    paddingRight: 48,
+    position: 'absolute',
+    zIndex: 1,
+    marginTop: 18,
+    alignSelf: 'flex-end'
+  },
+  capturePicClick: {
+    backgroundColor: colors.LIGHT_GREY,
+    flexDirection: 'row',
+    position: 'relative',
+    zIndex: 1
+  },
+  imageStyle: {
+    width: 30,
+    height: height / 15
+  },
+  flexView1: {
+    flex: 12
+  },
+  imageFixStyle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  imageStyle2: {
+    width: 150,
+    height: height / 15
+  },
+  myView: {
+    flex: 2,
+    height: 50,
+    width: 1,
+    alignItems: 'center'
+  },
+  myView1: {
+    height: height / 18,
+    width: 1.5,
+    backgroundColor: colors.GREY.btnSecondary,
+    alignItems: 'center',
+    marginTop: 10
+  },
+  myView2: {
+    flex: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  myView3: {
+    flex: 2.2,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  textStyle: {
+    color: colors.GREY.btnPrimary,
+    fontFamily: 'Roboto-Bold',
+    fontSize: 13
+  }
 }

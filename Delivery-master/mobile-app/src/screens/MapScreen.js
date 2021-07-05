@@ -1001,7 +1001,7 @@ export default function MapScreen(props) {
                 </View>
 
             </View>
-            {LoadingModalBody()}
+            {/* {LoadingModalBody()} */}
             {OptionModalBody()}
             {BookingModalBody()}
             <DateTimePickerModal

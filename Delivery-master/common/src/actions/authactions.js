@@ -14,7 +14,7 @@ import {
   REQUEST_OTP,
   REQUEST_OTP_SUCCESS,
   REQUEST_OTP_FAILED
-} from "../store/types";
+} from '../store/types'
 
 import {
   language,
@@ -23,66 +23,66 @@ import {
   FirebaseConfig,
   AppDetails,
   PurchaseDetails
-} from 'config';
+} from 'config'
 
 export const monitorProfileChanges = () => (dispatch) => (firebase) => {
   const {
     auth,
-    singleUserRef,
-  } = firebase;
+    singleUserRef
+  } = firebase
   singleUserRef(auth.currentUser.uid).child('queue').on('value', res => {
     singleUserRef(auth.currentUser.uid).once('value', res => {
       dispatch({
         type: UPDATE_USER_PROFILE,
         payload: res.val()
-      });
-    });
-  });
+      })
+    })
+  })
   singleUserRef(auth.currentUser.uid).child('walletHistory').on('value', res => {
     singleUserRef(auth.currentUser.uid).once('value', res => {
       dispatch({
         type: UPDATE_USER_PROFILE,
         payload: res.val()
-      });
-    });
-  });
+      })
+    })
+  })
   singleUserRef(auth.currentUser.uid).child('walletBalance').on('value', res => {
     singleUserRef(auth.currentUser.uid).once('value', res => {
       dispatch({
         type: UPDATE_USER_PROFILE,
         payload: res.val()
-      });
-    });
-  });
+      })
+    })
+  })
   singleUserRef(auth.currentUser.uid).child('mobile').on('value', res => {
     singleUserRef(auth.currentUser.uid).once('value', res => {
       dispatch({
         type: UPDATE_USER_PROFILE,
         payload: res.val()
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 export const fetchUser = () => (dispatch) => (firebase) => {
   const {
     auth,
     singleUserRef,
-    settingsRef,
-  } = firebase;
+    settingsRef
+  } = firebase
 
   dispatch({
     type: FETCH_USER,
     payload: null
-  });
+  })
   auth.onAuthStateChanged(user => {
     if (user) {
       try {
         fetch(`https://us-central1-seradd.${mainUrl}/baseset`, {
           method: 'POST',
           headers: {
-            'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
-            'Content-Type': 'application/json',
+            Accept: 'application/json, text/plain, /', // It can be used to overcome cors errors
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             license: PurchaseDetails.CodeCanyon_Purchase_Code ? PurchaseDetails.CodeCanyon_Purchase_Code : ' ',
@@ -98,242 +98,276 @@ export const fetchUser = () => (dispatch) => (firebase) => {
           .then(response => response.json())
           .then((res) => {
             if (res.success) {
-              settingsRef.once("value", settingdata => {
-                let settings = settingdata.val();
-                let password_provider_found = false;
-                let waitTime = 0;
+              settingsRef.once('value', settingdata => {
+                const settings = settingdata.val()
+                let password_provider_found = false
+                let waitTime = 0
                 for (let i = 0; i < user.providerData.length; i++) {
                   if (user.providerData[i].providerId == 'password') {
-                    password_provider_found = true;
-                    break;
+                    password_provider_found = true
+                    break
                   }
                   if (user.providerData[i].providerId == 'facebook.com' || user.providerData[i].providerId == 'apple.com') {
-                    waitTime = 2000;
-                    break;
+                    waitTime = 2000
+                    break
                   }
                 }
                 if ((password_provider_found && settings.email_verify && user.emailVerified) || !settings.email_verify || !password_provider_found) {
                   setTimeout(() => {
-                    singleUserRef(user.uid).once("value", snapshot => {
+                    singleUserRef(user.uid).once('value', snapshot => {
                       if (snapshot.val()) {
-                        user.profile = snapshot.val();
+                        user.profile = snapshot.val()
                         if (user.profile.approved) {
                           dispatch({
                             type: FETCH_USER_SUCCESS,
                             payload: user
-                          });
+                          })
                         } else {
-                          auth.signOut();
+                          auth.signOut()
                           dispatch({
                             type: USER_SIGN_IN_FAILED,
                             payload: { code: language.auth_error, message: language.require_approval }
-                          });
+                          })
                         }
                       }
-                    });
-                  }, waitTime);
-                }
-                else {
-                  user.sendEmailVerification();
-                  auth.signOut();
+                    })
+                  }, waitTime)
+                } else {
+                  user.sendEmailVerification()
+                  auth.signOut()
                   dispatch({
                     type: USER_SIGN_IN_FAILED,
                     payload: { code: language.auth_error, message: language.email_verify_message }
-                  });
+                  })
                 }
-              });
-            }
-            else {
-              auth.signOut();
+              })
+            } else {
+              auth.signOut()
               dispatch({
                 type: USER_SIGN_OUT,
                 payload: null
-              });
-              alert('Base Settings Error 2');
+              })
+              alert('Base Settings Error 2')
             }
           }).catch(error => {
-            auth.signOut();
+            auth.signOut()
             dispatch({
               type: USER_SIGN_OUT,
               payload: null
-            });
-            alert('Base Settings Error 2');
+            })
+            alert('Base Settings Error 2')
           })
       } catch (error) {
-        auth.signOut();
+        auth.signOut()
         dispatch({
           type: USER_SIGN_OUT,
           payload: null
-        });
-        alert('Base Settings Error 1');
+        })
+        alert('Base Settings Error 1')
       }
     } else {
       dispatch({
         type: FETCH_USER_FAILED,
         payload: { code: language.auth_error, message: language.not_logged_in }
-      });
+      })
     }
-  });
-};
+  })
+}
 
 export const validateReferer = async (referralId) => {
-  console.log("validateReferer", referralId, `${cloud_function_server_url}/validate_referrer`)
+  console.log('validateReferer', referralId, `${cloud_function_server_url}/validate_referrer`)
   const response = await fetch(`${cloud_function_server_url}/validate_referrer`, {
     method: 'POST',
     headers: {
-      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
+      Accept: 'application/json, text/plain, /', // It can be used to overcome cors errors
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       referralId: referralId
     })
   })
-  const json = await response.json();
-  console.log("Validate referal json", json)
-  return json;
-};
+  const json = await response.json()
+  console.log('Validate referal json', json)
+  return json
+}
 
 export const checkUserExists = async (regData) => {
-  console.log("User existing url", `${cloud_function_server_url}/check_user_exists`, regData)
-  console.log("Data", JSON.stringify({
+  console.log('User existing url', `${cloud_function_server_url}/check_user_exists`, regData)
+  console.log('Data', JSON.stringify({
     email: regData.email,
     mobile: regData.mobile
   }))
+  const formData = new FormData()
+  formData.append('email', regData.email)
+  formData.append('mobile', regData.mobile)
+  console.log(formData)
   const response = await fetch(`${cloud_function_server_url}/check_user_exists`, {
     method: 'POST',
     headers: {
-      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
+      Accept: 'application/json', // It can be used to overcome cors errors
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      email: regData.email,
-      mobile: regData.mobile
-    })
+    body: formData
+  }).catch(function (error) {
+    console.log('There has been a problem with your fetch operation: ' + error.message)
+    throw error
   })
-  const json = await response.json();
-  console.log("User exist json", json)
-  return json;
-};
+  const json = await response.json()
+  console.log('User exist json', json)
+  return json
+}
+
+// export const checkUserExists = async (regData) => {
+//   console.log('User existing url', `${cloud_function_server_url}/check_user_exists`, regData)
+//   console.log('Data', JSON.stringify({
+//     email: regData.email,
+//     mobile: regData.mobile
+//   }))
+//   const formData = new FormData()
+//   formData.append('email', JSON.stringify(regData.email))
+//   formData.append('mobile', JSON.stringify(regData.mobile))
+//   console.log(formData)
+
+//   const data = {
+//     method: 'POST',
+//     headers: {
+//       Accept: 'application/json',
+//       'Content-Type': 'application/json'
+//     },
+//     body: formData
+//   }
+//   console.log(data)
+//   const response = fetch(`${cloud_function_server_url}/check_user_exists`, data)
+//     .then(function (response) {
+//       console.log('User exist json', response)
+
+//       return response.json()
+//     })
+//     .catch(function (error) {
+//       console.log('There has been a problem with your fetch operation: ' + error.message)
+//       // ADD THIS THROW error
+//       throw error
+//     })
+
+//   // const json = await response ? response.json() : response
+//   // return json
+// }
 
 export const emailSignUp = (regData) => async (firebase) => {
-  console.log("Response data", regData, firebase)
-  let url = `${cloud_function_server_url}/user_signup`;
-  console.log("url", url)
+  console.log('Response data', regData, firebase)
+  const url = `${cloud_function_server_url}/user_signup`
+  console.log('url', url)
 
   const {
     driverDocsRef
-  } = firebase;
-  let createDate = new Date();
-  regData.createdAt = createDate.toISOString();
+  } = firebase
+  const createDate = new Date()
+  regData.createdAt = createDate.toISOString()
   if (regData.usertype == 'driver') {
-    let timestamp = createDate.getTime();
-    await driverDocsRef(timestamp).put(regData.licenseImage);
-    regData.licenseImage = await driverDocsRef(timestamp).getDownloadURL();
+    const timestamp = createDate.getTime()
+    await driverDocsRef(timestamp).put(regData.licenseImage)
+    regData.licenseImage = await driverDocsRef(timestamp).getDownloadURL()
   }
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Accept': 'application/json, text/plain, /',  // It can be used to overcome cors errors
-      'Content-Type': 'application/json',
+      Accept: 'application/json', // It can be used to overcome cors errors
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({ regData: regData })
   })
-  console.log("response", response.json)
-  return await response.json();
-};
+  console.log('response', response.json)
+  return await response.json()
+}
 
 export const requestPhoneOtpDevice = (phoneNumber, appVerifier) => (dispatch) => async (firebase) => {
   const {
     phoneProvider
-  } = firebase;
+  } = firebase
   dispatch({
     type: REQUEST_OTP,
     payload: null
-  });
+  })
   try {
     const verificationId = await phoneProvider.verifyPhoneNumber(
       phoneNumber,
       appVerifier
-    );
+    )
     dispatch({
       type: REQUEST_OTP_SUCCESS,
       payload: verificationId
-    });
-  }
-  catch (error) {
+    })
+  } catch (error) {
     dispatch({
       type: REQUEST_OTP_FAILED,
       payload: error
-    });
+    })
   };
 }
 
 export const mobileSignIn = (verficationId, code) => (dispatch) => (firebase) => {
   const {
     auth,
-    mobileAuthCredential,
-  } = firebase;
+    mobileAuthCredential
+  } = firebase
 
   dispatch({
     type: USER_SIGN_IN,
     payload: null
-  });
+  })
   auth.signInWithCredential(mobileAuthCredential(verficationId, code))
     .then((user) => {
-      //OnAuthStateChange takes care of Navigation
+      // OnAuthStateChange takes care of Navigation
     }).catch(error => {
       dispatch({
         type: USER_SIGN_IN_FAILED,
         payload: error
-      });
-    });
-};
-
+      })
+    })
+}
 
 export const signIn = (email, password) => (dispatch) => (firebase) => {
-
   const {
     auth
-  } = firebase;
+  } = firebase
 
   dispatch({
     type: USER_SIGN_IN,
     payload: null
-  });
+  })
   auth
     .signInWithEmailAndPassword(email, password)
     .then(res => {
-      //OnAuthStateChange takes care of Navigation
+      // OnAuthStateChange takes care of Navigation
     })
     .catch(error => {
       dispatch({
         type: USER_SIGN_IN_FAILED,
         payload: error
-      });
-    });
-};
+      })
+    })
+}
 
 export const facebookSignIn = (token) => (dispatch) => (firebase) => {
-
   const {
     auth,
     facebookProvider,
     facebookCredential,
     singleUserRef
-  } = firebase;
+  } = firebase
 
   dispatch({
     type: USER_SIGN_IN,
     payload: null
-  });
+  })
   if (token) {
-    const credential = facebookCredential(token);
+    const credential = facebookCredential(token)
     auth.signInWithCredential(credential)
       .then((user) => {
         if (user.additionalUserInfo) {
           singleUserRef(user.user.uid).once('value', snapshot => {
             if (!snapshot.val()) {
-              let userData = {
+              const userData = {
                 createdAt: new Date().toISOString(),
                 firstName: user.additionalUserInfo.profile.first_name ? user.additionalUserInfo.profile.first_name : user.additionalUserInfo.profile.name ? user.additionalUserInfo.profile.name : ' ',
                 lastName: user.additionalUserInfo.profile.last_name ? user.additionalUserInfo.profile.last_name : ' ',
@@ -345,29 +379,29 @@ export const facebookSignIn = (token) => (dispatch) => (firebase) => {
                 walletBalance: 0,
                 loginType: 'facebook'
               }
-              singleUserRef(user.user.uid).set(userData);
-              updateProfile({ ...user.user, profile: {} }, userData);
+              singleUserRef(user.user.uid).set(userData)
+              updateProfile({ ...user.user, profile: {} }, userData)
             }
-          });
+          })
         }
       })
       .catch(error => {
         dispatch({
           type: USER_SIGN_IN_FAILED,
           payload: error
-        });
+        })
       }
-      );
+      )
   } else {
     auth.signInWithPopup(facebookProvider).then(function (result) {
-      var token = result.credential.accessToken;
-      const credential = facebookCredential(token);
+      const token = result.credential.accessToken
+      const credential = facebookCredential(token)
       auth.signInWithCredential(credential)
         .then((user) => {
           if (user.additionalUserInfo) {
             singleUserRef(user.user.uid).once('value', snapshot => {
               if (!snapshot.val()) {
-                let userData = {
+                const userData = {
                   createdAt: new Date().toISOString(),
                   firstName: user.additionalUserInfo.profile.first_name ? user.additionalUserInfo.profile.first_name : user.additionalUserInfo.profile.name ? user.additionalUserInfo.profile.name : ' ',
                   lastName: user.additionalUserInfo.profile.last_name ? user.additionalUserInfo.profile.last_name : ' ',
@@ -379,48 +413,47 @@ export const facebookSignIn = (token) => (dispatch) => (firebase) => {
                   walletBalance: 0,
                   loginType: 'facebook'
                 }
-                singleUserRef(user.user.uid).set(userData);
-                updateProfile({ ...user.user, profile: {} }, userData);
+                singleUserRef(user.user.uid).set(userData)
+                updateProfile({ ...user.user, profile: {} }, userData)
               }
-            });
+            })
           }
         })
         .catch(error => {
           dispatch({
             type: USER_SIGN_IN_FAILED,
             payload: error
-          });
+          })
         }
-        );
+        )
     }).catch(function (error) {
       dispatch({
         type: USER_SIGN_IN_FAILED,
         payload: error
-      });
-    });
+      })
+    })
   }
-};
+}
 
 export const appleSignIn = (credentialData) => (dispatch) => (firebase) => {
-
   const {
     auth,
     appleProvider,
     singleUserRef
-  } = firebase;
+  } = firebase
 
   dispatch({
     type: USER_SIGN_IN,
     payload: null
-  });
+  })
   if (credentialData) {
-    const credential = appleProvider.credential(credentialData);
+    const credential = appleProvider.credential(credentialData)
     auth.signInWithCredential(credential)
       .then((user) => {
         if (user.additionalUserInfo) {
           singleUserRef(user.user.uid).once('value', snapshot => {
             if (!snapshot.val()) {
-              let userData = {
+              const userData = {
                 createdAt: new Date().toISOString(),
                 firstName: ' ',
                 lastName: ' ',
@@ -432,18 +465,18 @@ export const appleSignIn = (credentialData) => (dispatch) => (firebase) => {
                 walletBalance: 0,
                 loginType: 'apple'
               }
-              singleUserRef(user.user.uid).set(userData);
-              updateProfile({ ...user.user, profile: {} }, userData);
+              singleUserRef(user.user.uid).set(userData)
+              updateProfile({ ...user.user, profile: {} }, userData)
             }
-          });
+          })
         }
       })
       .catch((error) => {
         dispatch({
           type: USER_SIGN_IN_FAILED,
           payload: error
-        });
-      });
+        })
+      })
   } else {
     auth.signInWithPopup(appleProvider).then(function (result) {
       auth.signInWithCredential(result.credential)
@@ -451,7 +484,7 @@ export const appleSignIn = (credentialData) => (dispatch) => (firebase) => {
           if (user.additionalUserInfo) {
             singleUserRef(user.user.uid).once('value', snapshot => {
               if (!snapshot.val()) {
-                let userData = {
+                const userData = {
                   createdAt: new Date().toISOString(),
                   firstName: ' ',
                   lastName: ' ',
@@ -463,33 +496,32 @@ export const appleSignIn = (credentialData) => (dispatch) => (firebase) => {
                   walletBalance: 0,
                   loginType: 'apple'
                 }
-                singleUserRef(user.user.uid).set(userData);
-                updateProfile({ ...user.user, profile: {} }, userData);
+                singleUserRef(user.user.uid).set(userData)
+                updateProfile({ ...user.user, profile: {} }, userData)
               }
-            });
+            })
           }
         })
         .catch(error => {
           dispatch({
             type: USER_SIGN_IN_FAILED,
             payload: error
-          });
+          })
         }
-        );
+        )
     }).catch(function (error) {
       dispatch({
         type: USER_SIGN_IN_FAILED,
         payload: error
-      });
-    });
+      })
+    })
   }
-};
+}
 
 export const signOut = () => (dispatch) => (firebase) => {
-
   const {
-    auth,
-  } = firebase;
+    auth
+  } = firebase
 
   auth
     .signOut()
@@ -497,105 +529,100 @@ export const signOut = () => (dispatch) => (firebase) => {
       dispatch({
         type: USER_SIGN_OUT,
         payload: null
-      });
+      })
     })
     .catch(error => {
 
-    });
-};
+    })
+}
 
 export const deleteUser = (uid) => (dispatch) => (firebase) => {
   const {
     singleUserRef,
     auth
-  } = firebase;
+  } = firebase
 
   singleUserRef(uid).remove().then(() => {
     if (auth.currentUser.uid == uid) {
-      auth.signOut();
+      auth.signOut()
       dispatch({
         type: USER_DELETED,
         payload: null
-      });
+      })
     }
-  });
-};
+  })
+}
 
 export const updateProfile = (userAuthData, updateData) => (dispatch) => (firebase) => {
-
   const {
-    singleUserRef,
-  } = firebase;
+    singleUserRef
+  } = firebase
 
-  let profile = userAuthData.profile;
+  let profile = userAuthData.profile
   profile = { ...profile, ...updateData }
   dispatch({
     type: UPDATE_USER_PROFILE,
     payload: profile
-  });
-  singleUserRef(userAuthData.uid).update(updateData);
-};
-
+  })
+  singleUserRef(userAuthData.uid).update(updateData)
+}
 
 export const updateProfileImage = (userAuthData, imageBlob) => (dispatch) => (firebase) => {
-
   const {
     singleUserRef,
-    profileImageRef,
-  } = firebase;
+    profileImageRef
+  } = firebase
 
   profileImageRef(userAuthData.uid).put(imageBlob).then(() => {
     imageBlob.close()
     return profileImageRef(userAuthData.uid).getDownloadURL()
   }).then((url) => {
-    let profile = userAuthData.profile;
-    profile.profile_image = url;
+    const profile = userAuthData.profile
+    profile.profile_image = url
     singleUserRef(userAuthData.uid).update({
       profile_image: url
-    });
+    })
     dispatch({
       type: UPDATE_USER_PROFILE,
       payload: profile
-    });
+    })
   })
-};
+}
 
 export const updatePushToken = (userAuthData, token, platform) => (dispatch) => (firebase) => {
-
   const {
-    singleUserRef,
-  } = firebase;
+    singleUserRef
+  } = firebase
 
-  let profile = userAuthData.profile;
-  profile.pushToken = token;
-  profile.userPlatform = platform;
+  const profile = userAuthData.profile
+  profile.pushToken = token
+  profile.userPlatform = platform
   dispatch({
     type: UPDATE_USER_PROFILE,
     payload: profile
-  });
+  })
   singleUserRef(userAuthData.uid).update({
     pushToken: token,
     userPlatform: platform
-  });
-};
+  })
+}
 
 export const clearLoginError = () => (dispatch) => (firebase) => {
   dispatch({
     type: CLEAR_LOGIN_ERROR,
     payload: null
-  });
-};
+  })
+}
 
 export const sendResetMail = (email) => (dispatch) => (firebase) => {
-
   const {
-    auth,
-  } = firebase;
+    auth
+  } = firebase
 
   dispatch({
     type: SEND_RESET_EMAIL,
     payload: email
-  });
+  })
   auth.sendPasswordResetEmail(email).then(function () {
     dispatch({
       type: SEND_RESET_EMAIL_SUCCESS,
@@ -603,11 +630,11 @@ export const sendResetMail = (email) => (dispatch) => (firebase) => {
         code: language.success,
         message: language.reset_pass_msg
       }
-    });
+    })
   }).catch(function (error) {
     dispatch({
       type: SEND_RESET_EMAIL_FAILED,
       payload: error
-    });
-  });
-};
+    })
+  })
+}

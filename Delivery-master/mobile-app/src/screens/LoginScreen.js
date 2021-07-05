@@ -1,205 +1,195 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect, useContext } from 'react'
 import {
-    StyleSheet,
-    View,
-    ImageBackground,
-    Text,
-    Dimensions,
-    KeyboardAvoidingView,
-    Alert,
-    TextInput,
-    Image,
-    ActivityIndicator
-} from "react-native";
-import MaterialButtonDark from "../components/MaterialButtonDark";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import SegmentedControlTab from 'react-native-segmented-control-tab';
-import { useSelector, useDispatch } from 'react-redux';
-import { FirebaseContext } from 'common/src';
-import { colors } from '../common/theme';
-import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
-import RNPickerSelect from 'react-native-picker-select';
+  StyleSheet,
+  View,
+  ImageBackground,
+  Text,
+  Dimensions,
+  KeyboardAvoidingView,
+  Alert,
+  TextInput,
+  Image,
+  ActivityIndicator
+} from 'react-native'
+import MaterialButtonDark from '../components/MaterialButtonDark'
+import { TouchableOpacity } from 'react-native-gesture-handler'
+import SegmentedControlTab from 'react-native-segmented-control-tab'
+import { useSelector, useDispatch } from 'react-redux'
+import { FirebaseContext } from 'common/src'
+import { colors } from '../common/theme'
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha'
+import RNPickerSelect from 'react-native-picker-select'
+import { signIn, sendResetMail, clearLoginError, requestPhoneOtpDevice, mobileSignIn, checkUserExists } from '../../../common/src/actions/authactions'
 import {
-    language,
-    countries,
-    default_country_code,
-    FirebaseConfig,
-    features
-} from 'config';
-import UpdatedLogin from "./UpdatedLogin";
+  language,
+  countries,
+  default_country_code,
+  FirebaseConfig,
+  features
+} from 'config'
+import UpdatedLogin from './UpdatedLogin'
 
-export default function EmailLoginScreen(props) {
-    const { api } = useContext(FirebaseContext);
-    const {
-        signIn,
-        sendResetMail,
-        clearLoginError,
-        requestPhoneOtpDevice,
-        mobileSignIn,
-        checkUserExists
-    } = api;
-    const auth = useSelector(state => state.auth);
-    const dispatch = useDispatch();
+export default function EmailLoginScreen (props) {
+  const auth = useSelector(state => state.auth)
+  const dispatch = useDispatch()
 
-    const formatCountries = () => {
-        let arr = [];
-        for (let i = 0; i < countries.length; i++) {
-            arr.push({ label: countries[i].label + " (+" + countries[i].phone + ")", value: "+" + countries[i].phone, key: countries[i].code });
-        }
-        return arr;
+  const formatCountries = () => {
+    const arr = []
+    for (let i = 0; i < countries.length; i++) {
+      arr.push({ label: countries[i].label + ' (+' + countries[i].phone + ')', value: '+' + countries[i].phone, key: countries[i].code })
     }
-    const [state, setState] = useState({
-        email: '',
-        password: '',
-        customStyleIndex: 0,
-        phoneNumber: null,
-        verificationId: null,
-        verificationCode: null,
-        countryCodeList: formatCountries(),
-        countryCode: "+" + default_country_code.phone
-    });
+    return arr
+  }
+  const [state, setState] = useState({
+    email: '',
+    password: '',
+    customStyleIndex: 0,
+    phoneNumber: null,
+    verificationId: null,
+    verificationCode: null,
+    countryCodeList: formatCountries(),
+    countryCode: '+' + default_country_code.phone
+  })
 
-    const emailInput = useRef(null);
-    const passInput = useRef(null);
-    const pageActive = useRef(false);
-    const [loading, setLoading] = useState(false);
-    const recaptchaVerifier = useRef(null);
+  const emailInput = useRef(null)
+  const passInput = useRef(null)
+  const pageActive = useRef(false)
+  const [loading, setLoading] = useState(false)
+  const recaptchaVerifier = useRef(null)
 
-    useEffect(() => {
-        if (auth.info && pageActive.current) {
-            pageActive.current = false;
-            props.navigation.navigate('AuthLoading');
-            setLoading(false);
-        }
-        if (auth.error && auth.error.msg && pageActive.current && auth.error.msg.message !== language.not_logged_in) {
-            pageActive.current = false;
-            Alert.alert(language.alert, auth.error.msg.message);
-            dispatch(clearLoginError());
-            setLoading(false);
-        }
-        if (auth.verificationId) {
-            pageActive.current = false;
-            setState({ ...state, verificationId: auth.verificationId });
-            setLoading(false);
-        }
-    }, [auth.info, auth.error, auth.error.msg, auth.verificationId]);
+  useEffect(() => {
+    if (auth.info && pageActive.current) {
+      pageActive.current = false
+      props.navigation.navigate('AuthLoading')
+      setLoading(false)
+    }
+    if (auth.error && auth.error.msg && pageActive.current && auth.error.msg.message !== language.not_logged_in) {
+      pageActive.current = false
+      Alert.alert(language.alert, auth.error.msg.message)
+      dispatch(clearLoginError())
+      setLoading(false)
+    }
+    if (auth.verificationId) {
+      pageActive.current = false
+      setState({ ...state, verificationId: auth.verificationId })
+      setLoading(false)
+    }
+  }, [auth.info, auth.error, auth.error.msg, auth.verificationId])
 
-    onPressLogin = async () => {
-        setLoading(true);
-        if (state.countryCode && state.countryCode !== language.select_country) {
-            if (state.phoneNumber) {
-                let formattedNum = state.phoneNumber.replace(/ /g, '');
-                formattedNum = state.countryCode + formattedNum.replace(/-/g, '');
-                if (formattedNum.length > 8) {
-                    checkUserExists({ mobile: formattedNum }).then((res) => {
-                        if (res.users && res.users.length > 0) {
-                            pageActive.current = true;
-                            dispatch(requestPhoneOtpDevice(formattedNum, recaptchaVerifier.current));
-                        }
-                        else {
-                            setLoading(false);
-                            Alert.alert(language.alert, language.user_does_not_exists);
-                        }
-                    });
-                } else {
-                    Alert.alert(language.alert, language.mobile_no_blank_error);
-                    setLoading(false);
-                }
+  const onPressLogin = async () => {
+    setLoading(true)
+    if (state.countryCode && state.countryCode !== language.select_country) {
+      if (state.phoneNumber) {
+        let formattedNum = state.phoneNumber.replace(/ /g, '')
+        formattedNum = state.countryCode + formattedNum.replace(/-/g, '')
+        if (formattedNum.length > 8) {
+          checkUserExists({ mobile: formattedNum }).then((res) => {
+            if (res.users && res.users.length > 0) {
+              pageActive.current = true
+              dispatch(requestPhoneOtpDevice(formattedNum, recaptchaVerifier.current))
             } else {
-                Alert.alert(language.alert, language.mobile_no_blank_error);
-                setLoading(false);
+              setLoading(false)
+              Alert.alert(language.alert, language.user_does_not_exists)
             }
+          })
         } else {
-            Alert.alert(language.alert, language.country_blank_error);
-            setLoading(false);
+          Alert.alert(language.alert, language.mobile_no_blank_error)
+          setLoading(false)
         }
+      } else {
+        Alert.alert(language.alert, language.mobile_no_blank_error)
+        setLoading(false)
+      }
+    } else {
+      Alert.alert(language.alert, language.country_blank_error)
+      setLoading(false)
     }
+  }
 
-    onSignIn = async () => {
-        setLoading(true);
-        pageActive.current = true;
-        dispatch(mobileSignIn(
-            state.verificationId,
-            state.verificationCode
-        ));
+  const onSignIn = async () => {
+    setLoading(true)
+    pageActive.current = true
+    dispatch(mobileSignIn(
+      state.verificationId,
+      state.verificationCode
+    ))
+  }
+
+  const CancelLogin = () => {
+    setState({
+      ...state,
+      phoneNumber: null,
+      verificationId: null,
+      verificationCode: null
+    })
+  }
+
+  const validateEmail = (email) => {
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    const emailValid = re.test(email)
+    if (!emailValid) {
+      emailInput.current.focus()
+      setLoading(false)
+      Alert.alert(language.alert, language.valid_email_check)
     }
+    return emailValid
+  }
 
-    CancelLogin = () => {
+  const onAction = async () => {
+    setLoading(true)
+    const { email, password } = state
+    if (validateEmail(email)) {
+      if (password !== '') {
+        pageActive.current = true
+        dispatch(signIn(email, password))
         setState({
-            ...state,
-            phoneNumber: null,
-            verificationId: null,
-            verificationCode: null
-        });
+          ...state,
+          email: '',
+          password: ''
+        })
+        emailInput.current.focus()
+      } else {
+        passInput.current.focus()
+        setLoading(false)
+        Alert.alert(language.alert, language.password_blank_messege)
+      }
     }
+  }
 
-    validateEmail = (email) => {
-        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-        const emailValid = re.test(email);
-        if (!emailValid) {
-            emailInput.current.focus();
-            setLoading(false);
-            Alert.alert(language.alert, language.valid_email_check);
-        }
-        return emailValid;
-    }
-
-    onAction = async () => {
-        setLoading(true);
-        const { email, password } = state;
-        if (validateEmail(email)) {
-            if (password != '') {
-                pageActive.current = true;
-                dispatch(signIn(email, password));
-                setState({
-                    ...state,
-                    email: '',
-                    password: ''
-                });
-                emailInput.current.focus();
-            } else {
-                passInput.current.focus();
-                setLoading(false);
-                Alert.alert(language.alert, language.password_blank_messege);
+  const Forgot_Password = async (email) => {
+    if (validateEmail(email)) {
+      Alert.alert(
+        language.forgot_password_link,
+        language.forgot_password_confirm,
+        [
+          { text: language.cancel, onPress: () => { }, style: 'cancel' },
+          {
+            text: language.ok,
+            onPress: () => {
+              pageActive.current = true
+              dispatch(sendResetMail(email))
             }
-        }
-
+          }
+        ],
+        { cancelable: true }
+      )
     }
+  }
 
-    Forgot_Password = async (email) => {
-        if (validateEmail(email)) {
-            Alert.alert(
-                language.forgot_password_link,
-                language.forgot_password_confirm,
-                [
-                    { text: language.cancel, onPress: () => { }, style: 'cancel', },
-                    {
-                        text: language.ok,
-                        onPress: () => {
-                            pageActive.current = true;
-                            dispatch(sendResetMail(email));
-                        },
-                    }
-                ],
-                { cancelable: true },
-            )
-        }
-    }
+  const handleCustomIndexSelect = (index) => {
+    setState({ ...state, customStyleIndex: index })
+  }
 
-    handleCustomIndexSelect = (index) => {
-        setState({ ...state, customStyleIndex: index });
-    };
-
-    return (
-        // <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
-            <View style={{flex:1, backgroundColor: colors.WHITE }}>
-                <FirebaseRecaptchaVerifierModal
-                    ref={recaptchaVerifier}
-                    firebaseConfig={FirebaseConfig}
-                    attemptInvisibleVerification={true}
-                />
-                <View>
-                    {/* <SegmentedControlTab
+  return (
+  // <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.WHITE }}>
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={FirebaseConfig}
+        attemptInvisibleVerification
+      />
+      <View>
+        {/* <SegmentedControlTab
                         values={[language.email_login, language.mobile_login_title]}
                         selectedIndex={state.customStyleIndex}
                         onTabPress={handleCustomIndexSelect}
@@ -215,9 +205,9 @@ export default function EmailLoginScreen(props) {
                         activeTabTextStyle={{ color: colors.GREY.background }}
                     /> */}
 
-                    <UpdatedLogin setLoading={setLoading} pageActive={pageActive} navigation={props.navigation}/> 
+        <UpdatedLogin setLoading={setLoading} pageActive={pageActive} navigation={props.navigation} />
 
-                    {/* {state.customStyleIndex != 0 ?
+        {/* {state.customStyleIndex != 0 ?
                         <View style={styles.box1}>
                             <RNPickerSelect
                                 placeholder={{ label: language.select_country, value: language.select_country }}
@@ -233,7 +223,7 @@ export default function EmailLoginScreen(props) {
                             />
                         </View>
                         : null} */}
-                    {/* {state.customStyleIndex != 0 ?
+        {/* {state.customStyleIndex != 0 ?
                         <View style={styles.box2}>
                             <TextInput
                                 style={styles.textInput}
@@ -245,7 +235,7 @@ export default function EmailLoginScreen(props) {
                             />
                         </View>
                         : null} */}
-                    {/* {state.customStyleIndex != 0 ? state.verificationId ? null :
+        {/* {state.customStyleIndex != 0 ? state.verificationId ? null :
                         <MaterialButtonDark
                             onPress={onPressLogin}
                             style={styles.materialButtonDark}
@@ -270,135 +260,138 @@ export default function EmailLoginScreen(props) {
                             style={styles.materialButtonDark}
                         >{language.authorize}</MaterialButtonDark>
                         : null} */}
-                    {state.verificationId ?
-                        <View style={styles.actionLine}>
-                            <TouchableOpacity style={styles.actionItem} onPress={CancelLogin}>
-                                <Text style={styles.actionText}>{language.cancel}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        : null}
-                    {loading ?
-                        <View style={styles.loading}>
-                            <ActivityIndicator color={colors.BLACK} size='large' />
-                        </View>
-                        : null}
-                </View>
+        {state.verificationId
+          ? (
+            <View style={styles.actionLine}>
+              <TouchableOpacity style={styles.actionItem} onPress={CancelLogin}>
+                <Text style={styles.actionText}>{language.cancel}</Text>
+              </TouchableOpacity>
             </View>
-        
-        // {/* </KeyboardAvoidingView > */ }
-    );
+            )
+          : null}
+        {loading
+          ? (
+            <View style={styles.loading}>
+              <ActivityIndicator color={colors.BLACK} size='large' />
+            </View>)
+          : null}
+      </View>
+    </View>
+
+  // {/* </KeyboardAvoidingView > */ }
+  )
 }
 
 const styles = StyleSheet.create({
-    loading: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingBottom: 40
-    },
-    container: {
-        flex: 1
-    },
-    imagebg: {
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
-    },
-    segmentcontrol: {
-        color: colors.WHITE,
-        fontSize: 18,
-        fontFamily: "Roboto-Regular",
-        marginTop: 0,
-        alignSelf: "center",
-        height: 50,
-        marginLeft: 35,
-        marginRight: 35,
-    },
-    box1: {
-        height: 50,
-        backgroundColor: colors.WHITE,
-        marginTop: 26,
-        marginLeft: 35,
-        marginRight: 35,
-        borderWidth: 1.5,
-        borderColor: colors.GREY.border,
-        justifyContent: 'center',
-        borderRadius: 15
-    },
-    box2: {
-        height: 50,
-        backgroundColor: colors.WHITE,
-        marginTop: 20,
-        marginLeft: 35,
-        marginRight: 35,
-        borderWidth: 1.5,
-        borderColor: colors.GREY.border,
-        justifyContent: 'center',
-        borderRadius: 15
-    },
+  loading: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 40
+  },
+  container: {
+    flex: 1
+  },
+  imagebg: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height
+  },
+  segmentcontrol: {
+    color: colors.WHITE,
+    fontSize: 18,
+    fontFamily: 'Roboto-Regular',
+    marginTop: 0,
+    alignSelf: 'center',
+    height: 50,
+    marginLeft: 35,
+    marginRight: 35
+  },
+  box1: {
+    height: 50,
+    backgroundColor: colors.WHITE,
+    marginTop: 26,
+    marginLeft: 35,
+    marginRight: 35,
+    borderWidth: 1.5,
+    borderColor: colors.GREY.border,
+    justifyContent: 'center',
+    borderRadius: 15
+  },
+  box2: {
+    height: 50,
+    backgroundColor: colors.WHITE,
+    marginTop: 20,
+    marginLeft: 35,
+    marginRight: 35,
+    borderWidth: 1.5,
+    borderColor: colors.GREY.border,
+    justifyContent: 'center',
+    borderRadius: 15
+  },
 
-    textInput: {
-        backgroundColor: colors.WHITE.background,
-        fontSize: 18,
-        fontFamily: "Roboto-Regular",
-        textAlign: "left",
-        marginTop: 0,
-        marginLeft: 5
-    },
-    materialButtonDark: {
-        height: 50,
-        marginTop: 22,
-        marginLeft: 35,
-        marginRight: 35,
-        backgroundColor: colors.PINK,
-        borderRadius: 15
-    },
-    linkBar: {
-        flexDirection: "row",
-        marginTop: 30,
-        alignSelf: 'center'
-    },
-    barLinks: {
-        marginLeft: 15,
-        marginRight: 15,
-        alignSelf: "center",
-        fontSize: 18,
-        fontWeight: 'bold'
-    },
-    linkText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: colors.WHITE,
-        fontFamily: "Roboto-Bold",
-    },
-    pickerStyle: {
-        color: colors.GREY.background,
-        fontFamily: "Roboto-Regular",
-        fontSize: 18,
-        marginLeft: 5
-    },
+  textInput: {
+    backgroundColor: colors.WHITE.background,
+    fontSize: 18,
+    fontFamily: 'Roboto-Regular',
+    textAlign: 'left',
+    marginTop: 0,
+    marginLeft: 5
+  },
+  materialButtonDark: {
+    height: 50,
+    marginTop: 22,
+    marginLeft: 35,
+    marginRight: 35,
+    backgroundColor: colors.PINK,
+    borderRadius: 15
+  },
+  linkBar: {
+    flexDirection: 'row',
+    marginTop: 30,
+    alignSelf: 'center'
+  },
+  barLinks: {
+    marginLeft: 15,
+    marginRight: 15,
+    alignSelf: 'center',
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
+  linkText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.WHITE,
+    fontFamily: 'Roboto-Bold'
+  },
+  pickerStyle: {
+    color: colors.GREY.background,
+    fontFamily: 'Roboto-Regular',
+    fontSize: 18,
+    marginLeft: 5
+  },
 
-    actionLine: {
-        height: 20,
-        flexDirection: "row",
-        marginTop: 20,
-        alignSelf: 'center'
-    },
-    actionItem: {
-        height: 20,
-        marginLeft: 15,
-        marginRight: 15,
-        alignSelf: "center"
-    },
-    actionText: {
-        fontSize: 15,
-        fontFamily: "Roboto-Regular",
-        fontWeight: 'bold'
-    }
-});
+  actionLine: {
+    height: 20,
+    flexDirection: 'row',
+    marginTop: 20,
+    alignSelf: 'center'
+  },
+  actionItem: {
+    height: 20,
+    marginLeft: 15,
+    marginRight: 15,
+    alignSelf: 'center'
+  },
+  actionText: {
+    fontSize: 15,
+    fontFamily: 'Roboto-Regular',
+    fontWeight: 'bold'
+  }
+})
