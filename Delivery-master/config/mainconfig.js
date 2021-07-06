@@ -1,6 +1,6 @@
 export const MainConfig = {
     AppDetails: {
-        app_name: "Couriersy", 
+        app_name: "move-Ex", 
         app_description: "Couriersy fast deliver app",
         app_identifier: "com.devpoints.Couriersy",
         ios_app_version: "1.0.0", 

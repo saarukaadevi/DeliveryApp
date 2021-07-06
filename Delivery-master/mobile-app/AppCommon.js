@@ -1,26 +1,26 @@
-import { useState, useContext, useEffect, useRef } from 'react';
-import { store, FirebaseContext } from 'common/src';
-import { useSelector, useDispatch } from 'react-redux';
-import * as TaskManager from 'expo-task-manager';
-import * as Location from 'expo-location';
-import { Alert, Platform } from 'react-native';
-import { language } from 'config';
-import { colors } from './src/common/theme';
-import GetPushToken from './src/components/GetPushToken';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Permissions from 'expo-permissions';
-import { Audio } from 'expo-av';
-import * as Facebook from 'expo-facebook';
+import { useState, useContext, useEffect, useRef } from 'react'
+import { store, FirebaseContext } from 'common/src'
+import { useSelector, useDispatch } from 'react-redux'
+import * as TaskManager from 'expo-task-manager'
+import * as Location from 'expo-location'
+import { Alert, Platform } from 'react-native'
+import { language } from 'config'
+import { colors } from './src/common/theme'
+import GetPushToken from './src/components/GetPushToken'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as Permissions from 'expo-permissions'
+import { Audio } from 'expo-av'
+import * as Facebook from 'expo-facebook'
 
-const LOCATION_TASK_NAME = 'background-location-task';
+const LOCATION_TASK_NAME = 'background-location-task'
 
 TaskManager.defineTask(LOCATION_TASK_NAME, ({ data: { locations }, error }) => {
   if (error) {
-    console.log("Task Error");
+    console.log('Task Error')
     return;
   }
   if (locations.length > 0) {
-    let location = locations[locations.length - 1];
+    const location = locations[locations.length - 1]
     try {
       if (store.getState().auth.info && store.getState().auth.info.uid) {
         store.dispatch({
@@ -29,42 +29,42 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data: { locations }, error }) => {
             lat: location.coords.latitude,
             lng: location.coords.longitude
           }
-        });
+        })
       }
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
-});
+})
 
-export default function AppCommon({ children }) {
-  const { api } = useContext(FirebaseContext);
-  const dispatch = useDispatch();
-  const gps = useSelector(state => state.gpsdata);
-  const activeBooking = useSelector(state => state.bookinglistdata.tracked);
-  const lastLocation = useSelector(state => state.locationdata.coords);
-  const auth = useSelector(state => state.auth);
-  const tasks = useSelector(state => state.taskdata.tasks);
-  const settings = useSelector(state => state.settingsdata.settings);
-  const watcher = useRef();
-  const tokenFetched = useRef();
-  const locationOn = useRef();
-  const [sound, setSound] = useState();
+export default function AppCommon ({ children }) {
+  const { api } = useContext(FirebaseContext)
+  const dispatch = useDispatch()
+  const gps = useSelector(state => state.gpsdata)
+  const activeBooking = useSelector(state => state.bookinglistdata.tracked)
+  const lastLocation = useSelector(state => state.locationdata.coords)
+  const auth = useSelector(state => state.auth)
+  const tasks = useSelector(state => state.taskdata.tasks)
+  const settings = useSelector(state => state.settingsdata.settings)
+  const watcher = useRef()
+  const tokenFetched = useRef()
+  const locationOn = useRef()
+  const [sound, setSound] = useState()
 
   useEffect(() => {
     if (auth.info && auth.info.profile && auth.info.profile.usertype == 'driver' && tasks && tasks.length > 0) {
-      playSound();
+      playSound()
     }
     if (auth.info && auth.info.profile && auth.info.profile.usertype == 'driver' && (!tasks || tasks.length == 0)) {
-      stopPlaying();
+      stopPlaying()
     }
-  }, [auth.info,tasks]);
+  }, [auth.info, tasks])
 
-  useEffect(()=>{
-    if(settings){
-      loadSound();
+  useEffect(() => {
+    if (settings) {
+      loadSound()
     }
-  },[settings]);
+  }, [settings])
 
   const loadSound = async () => {
     Audio.setAudioModeAsync({
@@ -76,27 +76,28 @@ export default function AppCommon({ children }) {
       interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
       playThroughEarpieceAndroid: false,
       useNativeControls: false
-    });
+    })
   
-    const { sound } = await Audio.Sound.createAsync(settings.CarHornRepeat?require('./assets/sounds/car_horn_gap.wav'):require('./assets/sounds/car_horn.wav'));
-    sound.setIsLoopingAsync(settings.CarHornRepeat);
-    setSound(sound);
+    const { sound } = await Audio.Sound.createAsync(settings.CarHornRepeat ? require('./assets/sounds/car_horn_gap.wav'):require('./assets/sounds/car_horn.wav'))
+    sound.setIsLoopingAsync(settings.CarHornRepeat)
+    setSound(sound)
   }
 
   const playSound = async () => {
-    sound.playAsync();
+    sound.playAsync()
   }
 
   const stopPlaying = async () => {
-    if(sound){
-      sound.stopAsync();
+    if (sound) {
+      sound.stopAsync()
     }
   }
 
-  useEffect(() => {;
-    tokenFetched.current = false;
-    locationOn.current = false;
-  }, []);
+  useEffect(() => { 
+;
+    tokenFetched.current = false
+    locationOn.current = false
+  }, [])
 
   useEffect(() => {
     if (gps.location) {
@@ -104,130 +105,131 @@ export default function AppCommon({ children }) {
         api.saveUserLocation(auth.info.uid, {
           lat: gps.location.lat,
           lng: gps.location.lng
-        });
+        })
       }
       if (activeBooking && auth.info.profile.usertype == 'driver') {
         if (lastLocation && (activeBooking.status == 'ACCEPTED' || activeBooking.status == 'STARTED')) {
-          let diff = api.GetDistance(lastLocation.lat, lastLocation.lng, gps.location.lat, gps.location.lng);
+          const diff = api.GetDistance(lastLocation.lat, lastLocation.lng, gps.location.lat, gps.location.lng)
           if (diff > 0.010) {
             api.saveTracking(activeBooking.id, {
               at: new Date().getTime(),
               status: activeBooking.status,
               lat: gps.location.lat,
               lng: gps.location.lng
-            });
+            })
           }
         }
         if (activeBooking.status == 'ACCEPTED') {
-          let diff = api.GetDistance(activeBooking.pickup.lat, activeBooking.pickup.lng, gps.location.lat, gps.location.lng);
+          const diff = api.GetDistance(activeBooking.pickup.lat, activeBooking.pickup.lng, gps.location.lat, gps.location.lng)
           if (diff < 0.02) {
-            let bookingData = activeBooking;
-            bookingData.status = 'ARRIVED';
-            store.dispatch(api.updateBooking(bookingData));
+            const bookingData = activeBooking
+            bookingData.status = 'ARRIVED'
+            store.dispatch(api.updateBooking(bookingData))
             api.saveTracking(activeBooking.id, {
               at: new Date().getTime(),
               status: 'ARRIVED',
               lat: gps.location.lat,
               lng: gps.location.lng
-            });
+            })
           }
         }
       }
     }
-  }, [gps.location]);
+  }, [gps.location])
 
   const AskTrackingTransparency = async () => {
-    const trackingStatus = await Facebook.getPermissionsAsync();
+    const trackingStatus = await Facebook.getPermissionsAsync()
     if (!trackingStatus.granted) {
-      const resp = await Facebook.requestPermissionsAsync();
-      if(resp.granted){
-        StartBackgroundLocation();
+      const resp = await Facebook.requestPermissionsAsync()
+      if (resp.granted) {
+        StartBackgroundLocation()
       }
     }
-  }      
+  }
 
   useEffect(() => {
-    if (auth.info
-      && auth.info.profile
-      && auth.info.profile.usertype == 'driver'
-      && auth.info.profile.driverActiveStatus
-      && auth.info.profile.approved
+    if (auth.info &&
+      auth.info.profile &&
+      auth.info.profile.usertype == 'driver' &&
+      auth.info.profile.driverActiveStatus &&
+      auth.info.profile.approved
     ) {
       if (!locationOn.current) {
-        locationOn.current = true;
-        if(Platform.OS == 'android'){
+        locationOn.current = true
+        if (Platform.OS == 'android') {
           AsyncStorage.getItem('firstRun', (err, result) => {
-            if(result){
-              StartBackgroundLocation();
-            }else{
+            if (result) {
+              StartBackgroundLocation()
+            }else {
               Alert.alert(
                 language.disclaimer,
                 language.disclaimer_text,
                 [
-                  { 
-                    text: language.ok, onPress: () => {
-                      AsyncStorage.setItem('firstRun', 'OK');
-                      StartBackgroundLocation();
+                  {
+                    text: language.ok,
+onPress: () => {
+                      AsyncStorage.setItem('firstRun', 'OK')
+                      StartBackgroundLocation()
                     }
                   }
                 ],
                 { cancelable: false }
-              );
+              )
             }
-          });
-        }else{
-          AskTrackingTransparency();
+          })
+        }else {
+          AskTrackingTransparency()
         }
       }
     }
-    if (auth.info
-      && auth.info.profile
-      && auth.info.profile.usertype == 'driver'
-      && auth.info.profile.driverActiveStatus == false
-      && auth.info.profile.approved
+    if (auth.info &&
+      auth.info.profile &&
+      auth.info.profile.usertype == 'driver' &&
+      auth.info.profile.driverActiveStatus == false &&
+      auth.info.profile.approved
     ) {
       if (locationOn.current) {
-        locationOn.current = false;
-        StopBackgroundLocation();
+        locationOn.current = false
+        StopBackgroundLocation()
       }
     }
-    if (auth.info
-      && auth.info.profile
-      && auth.info.profile.usertype == 'rider'
-      && auth.info.profile.approved
+    if (auth.info &&
+      auth.info.profile &&
+      auth.info.profile.usertype == 'rider' &&
+      auth.info.profile.approved
     ) {
       if (!locationOn.current) {
-        locationOn.current = true;
-        GetOneTimeLocation();
+        locationOn.current = true
+        GetOneTimeLocation()
       }
     }
-    if (auth.info
-      && auth.info.profile
-      && auth.info.profile.approved
-      && (auth.info.profile.usertype == 'rider' || auth.info.profile.usertype == 'driver')) {
+    if (auth.info &&
+      auth.info.profile &&
+      auth.info.profile.approved &&
+      (auth.info.profile.usertype == 'rider' || auth.info.profile.usertype == 'driver')) {
       if (!tokenFetched.current) {
-        tokenFetched.current = true;
-        saveToken();
+        tokenFetched.current = true
+        saveToken()
       }
     }
-  }, [auth.info]);
+  }, [auth.info])
 
   const saveToken = async () => {
-    let token = await GetPushToken();
+    const token = await GetPushToken()
     dispatch(
       api.updatePushToken(
         auth.info,
-        token?token:'token_error',
+        token || 'token_error',
         Platform.OS == 'ios' ? 'IOS' : 'ANDROID'
       )
-    );
+    )
   };
 
   const GetOneTimeLocation = async () => {
-    let { status } = await Location.requestPermissionsAsync();
+    const { status } = await Location.requestPermissionsAsync()
     if (status === 'granted') {
       try {
-        let location = await Location.getCurrentPositionAsync({});
+        const location = await Location.getCurrentPositionAsync({})
         if (location) {
           store.dispatch({
             type: 'UPDATE_GPS_LOCATION',
@@ -235,7 +237,7 @@ export default function AppCommon({ children }) {
               lat: location.coords.latitude,
               lng: location.coords.longitude
             }
-          });
+          })
         }
       } catch (error) {
         Alert.alert(language.alert, language.location_permission_error)
@@ -246,7 +248,7 @@ export default function AppCommon({ children }) {
   }
 
   const StartBackgroundLocation = async () => {
-    const { status } = await Permissions.askAsync(Permissions.LOCATION);
+    const { status } = await Permissions.askAsync(Permissions.LOCATION)
     if (status === 'granted') {
       try {
         await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
@@ -258,9 +260,9 @@ export default function AppCommon({ children }) {
             notificationBody: language.locationServiveBody,
             notificationColor: colors.SKY
           }
-        });
+        })
       } catch (error) {
-        StartForegroundGeolocation();
+        StartForegroundGeolocation()
       }
     } else {
       Alert.alert(language.alert, language.location_permission_error)
@@ -270,7 +272,7 @@ export default function AppCommon({ children }) {
   const StartForegroundGeolocation = async () => {
     watcher.current = await Location.watchPositionAsync({
       accuracy: Location.Accuracy.High,
-      activityType: Location.ActivityType.AutomotiveNavigation,
+      activityType: Location.ActivityType.AutomotiveNavigation
     }, location => {
       store.dispatch({
         type: 'UPDATE_GPS_LOCATION',
@@ -278,39 +280,39 @@ export default function AppCommon({ children }) {
           lat: location.coords.latitude,
           lng: location.coords.longitude
         }
-      });
-    });
+      })
+    })
   }
 
   const StopBackgroundLocation = async () => {
-    locationOn.current = false;
+    locationOn.current = false
     try {
       TaskManager.getRegisteredTasksAsync().then((res) => {
         if (res.length > 0) {
           for (let i = 0; i < res.length; i++) {
             if (res[i].taskName == LOCATION_TASK_NAME) {
-              Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+              Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME)
               break;
             }
           }
         } else {
           if (watcher.current) {
-            watcher.current.remove();
+            watcher.current.remove()
           }
         }
-      });
+      })
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
   useEffect(() => {
     if (api) {
-      dispatch(api.fetchUser());
-      dispatch(api.fetchCarTypes());
-      dispatch(api.fetchSettings());
+      dispatch(api.fetchUser())
+      dispatch(api.fetchCarTypes())
+      dispatch(api.fetchSettings())
     }
-  }, [api]);
+  }, [api])
 
-  return children;
+  return children
 }

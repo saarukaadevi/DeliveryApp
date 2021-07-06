@@ -22,48 +22,49 @@ export default function SearchScreen(props) {
     const locationType = props.navigation.getParam('locationType');
     const savedAddresses = props.navigation.getParam('savedAddresses');
 
-    if(features.AllowCountrySelection == false){
+    if (features.AllowCountrySelection == false) {
 
     }
 
     const updateLocation = (data) => {
-        if(data.place_id){
-            fetchCoordsfromPlace(data.place_id).then((res)=>{
-                if(res && res.lat){
-                    if(locationType=='pickup'){
+        console.log('hjhujh',data)
+        if (data.place_id) {
+            fetchCoordsfromPlace(data.place_id).then((res) => {
+                if (res && res.lat) {
+                    if (locationType == 'pickup') {
                         dispatch(updateTripPickup({
-                            lat:res.lat,
-                            lng:res.lng,
-                            add:data.description,
+                            lat: res.lat,
+                            lng: res.lng,
+                            add: data.description,
                             source: 'search'
                         }));
-                    }else{
+                    } else {
                         dispatch(updateTripDrop({
-                            lat:res.lat,
-                            lng:res.lng,
-                            add:data.description,
+                            lat: res.lat,
+                            lng: res.lng,
+                            add: data.description,
                             source: 'search'
                         }));
                     }
                     props.navigation.pop();
-                }else{
-                    Alert.alert(language.alert,language.place_to_coords_error);
+                } else {
+                    Alert.alert(language.alert, language.place_to_coords_error);
                 }
             });
         } else {
-            if(data.description){
-                if(locationType=='pickup'){
+            if (data.description) {
+                if (locationType == 'pickup') {
                     dispatch(updateTripPickup({
-                        lat:data.lat,
-                        lng:data.lng,
-                        add:data.description,
+                        lat: data.lat,
+                        lng: data.lng,
+                        add: data.description,
                         source: 'search'
                     }));
-                }else{
+                } else {
                     dispatch(updateTripDrop({
-                        lat:data.lat,
-                        lng:data.lng,
-                        add:data.description,
+                        lat: data.lat,
+                        lng: data.lng,
+                        add: data.description,
                         source: 'search'
                     }));
                 }
@@ -92,19 +93,19 @@ export default function SearchScreen(props) {
             }}
 
             query={
-                features.AllowCountrySelection?
-                {
-                    key: Google_Map_Key,
-                    language: 'en',
-                }
-                :
-                {
-                    key: Google_Map_Key,
-                    language: 'en',
-                    components: 'country:' + default_country_code.code.toLowerCase()
-                }
+                features.AllowCountrySelection ?
+                    {
+                        key: Google_Map_Key,
+                        language: 'en',
+                    }
+                    :
+                    {
+                        key: Google_Map_Key,
+                        language: 'en',
+                        components: 'country:' + default_country_code.code.toLowerCase()
+                    }
             }
-            predefinedPlaces = {savedAddresses}
+            predefinedPlaces={savedAddresses}
 
             styles={{
                 container: {
